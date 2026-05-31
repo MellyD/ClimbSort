@@ -1,0 +1,15 @@
+﻿using static FontRecommender.Core.Enums;
+
+namespace FontRecommender.Core.Models.Generic
+{
+    public class Coordinates
+    {
+        public required int Id { get; set; }
+        public virtual Climb? Climb { get; set; }
+        public virtual Crag? Crag { get; set; }
+        public virtual Topography? Topography { get; set; }
+        public required eCoordinateType CoordinateType { get; set; }
+        public required double Longitude { get; set; }
+        public required double Latitude { get; set; }
+    }
+}
