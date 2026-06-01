@@ -7,7 +7,6 @@ namespace FontRecommender.Core.Models
     {
         public required string GradeLabel { get; set; }
         public required virtual GradingSystem GradingSystem { get; set; }
-        public required eDisciplineType Discipline {  get; set; }
         public required int ScaleOrder { get; set; }
         public decimal MinDifficultyRank { get; set; }
         public decimal MaxDifficultyRank { get; set; }

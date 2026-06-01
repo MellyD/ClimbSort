@@ -23,9 +23,6 @@ builder.Configuration.AddAzureAppConfiguration(options =>
            .Select(KeyFilter.Any, "FontRec");
 });
 
-string? check = builder.Configuration["AutomapperLicenseKey"];
-string? check2 = builder.Configuration["FontRec:Serilog"];
-
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(builder.Configuration.GetSection("FontRec:Serilog")));
 
@@ -46,10 +43,9 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
-
 builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("FontRec:SQLConnectionString"));
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"]);
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif

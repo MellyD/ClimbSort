@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FontRecommender.Migrations
 {
     [DbContext(typeof(FontRecommendationDBContext))]
-    [Migration("20260519231656_InitialStructure")]
-    partial class InitialStructure
+    [Migration("20260531172438_RemoveDiscipline")]
+    partial class RemoveDiscipline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,44 +28,11 @@ namespace FontRecommender.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CoordinatesCrag", b =>
-                {
-                    b.Property<int>("CoordinatesId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CragId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("CoordinatesId", "CragId");
-
-                    b.HasIndex("CragId");
-
-                    b.ToTable("CoordinatesCrag");
-                });
-
-            modelBuilder.Entity("CoordinatesTopography", b =>
-                {
-                    b.Property<int>("CoordinatesId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("TopographyId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("CoordinatesId", "TopographyId");
-
-                    b.HasIndex("TopographyId");
-
-                    b.ToTable("CoordinatesTopography");
-                });
-
             modelBuilder.Entity("FontRecommender.Core.Models.Climb", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("CoordinatesId")
-                        .HasColumnType("int");
 
                     b.Property<Guid?>("CragId")
                         .HasColumnType("uniqueidentifier");
@@ -114,8 +81,6 @@ namespace FontRecommender.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CoordinatesId");
 
                     b.HasIndex("CragId");
 
@@ -171,10 +136,13 @@ namespace FontRecommender.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<Guid?>("ClimbId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("CoordinateType")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("EntityId")
+                    b.Property<Guid?>("CragId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<double>("Latitude")
@@ -183,7 +151,16 @@ namespace FontRecommender.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("float");
 
+                    b.Property<Guid?>("TopographyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ClimbId");
+
+                    b.HasIndex("CragId");
+
+                    b.HasIndex("TopographyId");
 
                     b.ToTable("Coordinates", (string)null);
                 });
@@ -198,9 +175,6 @@ namespace FontRecommender.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Discipline")
-                        .HasColumnType("int");
 
                     b.Property<string>("GradeLabel")
                         .IsRequired()
@@ -241,12 +215,11 @@ namespace FontRecommender.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CountryCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Discipline")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -306,43 +279,8 @@ namespace FontRecommender.Migrations
                     b.ToTable("WallType", (string)null);
                 });
 
-            modelBuilder.Entity("CoordinatesCrag", b =>
-                {
-                    b.HasOne("FontRecommender.Core.Models.Generic.Coordinates", null)
-                        .WithMany()
-                        .HasForeignKey("CoordinatesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FontRecommender.Core.Models.Crag", null)
-                        .WithMany()
-                        .HasForeignKey("CragId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CoordinatesTopography", b =>
-                {
-                    b.HasOne("FontRecommender.Core.Models.Generic.Coordinates", null)
-                        .WithMany()
-                        .HasForeignKey("CoordinatesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FontRecommender.Core.Models.Topography", null)
-                        .WithMany()
-                        .HasForeignKey("TopographyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("FontRecommender.Core.Models.Climb", b =>
                 {
-                    b.HasOne("FontRecommender.Core.Models.Generic.Coordinates", "Coordinates")
-                        .WithMany()
-                        .HasForeignKey("CoordinatesId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("FontRecommender.Core.Models.Crag", "Crag")
                         .WithMany()
                         .HasForeignKey("CragId")
@@ -372,8 +310,6 @@ namespace FontRecommender.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("Coordinates");
-
                     b.Navigation("Crag");
 
                     b.Navigation("Grade");
@@ -381,6 +317,30 @@ namespace FontRecommender.Migrations
                     b.Navigation("Topography");
 
                     b.Navigation("WallType");
+                });
+
+            modelBuilder.Entity("FontRecommender.Core.Models.Generic.Coordinates", b =>
+                {
+                    b.HasOne("FontRecommender.Core.Models.Climb", "Climb")
+                        .WithMany("Coordinates")
+                        .HasForeignKey("ClimbId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FontRecommender.Core.Models.Crag", "Crag")
+                        .WithMany("Coordinates")
+                        .HasForeignKey("CragId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FontRecommender.Core.Models.Topography", "Topography")
+                        .WithMany("Coordinates")
+                        .HasForeignKey("TopographyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Climb");
+
+                    b.Navigation("Crag");
+
+                    b.Navigation("Topography");
                 });
 
             modelBuilder.Entity("FontRecommender.Core.Models.Grade", b =>
@@ -394,14 +354,26 @@ namespace FontRecommender.Migrations
                     b.Navigation("GradingSystem");
                 });
 
+            modelBuilder.Entity("FontRecommender.Core.Models.Climb", b =>
+                {
+                    b.Navigation("Coordinates");
+                });
+
             modelBuilder.Entity("FontRecommender.Core.Models.Crag", b =>
                 {
                     b.Navigation("Climbs");
+
+                    b.Navigation("Coordinates");
                 });
 
             modelBuilder.Entity("FontRecommender.Core.Models.Grade", b =>
                 {
                     b.Navigation("Climbs");
+                });
+
+            modelBuilder.Entity("FontRecommender.Core.Models.Topography", b =>
+                {
+                    b.Navigation("Coordinates");
                 });
 #pragma warning restore 612, 618
         }

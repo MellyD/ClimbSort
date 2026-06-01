@@ -12,22 +12,6 @@ namespace FontRecommender.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Coordinates",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CoordinateType = table.Column<int>(type: "int", nullable: false),
-                    Longitude = table.Column<double>(type: "float", nullable: false),
-                    Latitude = table.Column<double>(type: "float", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Coordinates", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Crag",
                 columns: table => new
                 {
@@ -49,7 +33,6 @@ namespace FontRecommender.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CountryCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -88,30 +71,6 @@ namespace FontRecommender.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CoordinatesCrag",
-                columns: table => new
-                {
-                    CoordinatesId = table.Column<int>(type: "int", nullable: false),
-                    CragId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CoordinatesCrag", x => new { x.CoordinatesId, x.CragId });
-                    table.ForeignKey(
-                        name: "FK_CoordinatesCrag_Coordinates_CoordinatesId",
-                        column: x => x.CoordinatesId,
-                        principalTable: "Coordinates",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CoordinatesCrag_Crag_CragId",
-                        column: x => x.CragId,
-                        principalTable: "Crag",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Grade",
                 columns: table => new
                 {
@@ -138,30 +97,6 @@ namespace FontRecommender.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CoordinatesTopography",
-                columns: table => new
-                {
-                    CoordinatesId = table.Column<int>(type: "int", nullable: false),
-                    TopographyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CoordinatesTopography", x => new { x.CoordinatesId, x.TopographyId });
-                    table.ForeignKey(
-                        name: "FK_CoordinatesTopography_Coordinates_CoordinatesId",
-                        column: x => x.CoordinatesId,
-                        principalTable: "Coordinates",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CoordinatesTopography_Topography_TopographyId",
-                        column: x => x.TopographyId,
-                        principalTable: "Topography",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Climb",
                 columns: table => new
                 {
@@ -176,8 +111,9 @@ namespace FontRecommender.Migrations
                     Rating = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Link = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CoordinatesId = table.Column<int>(type: "int", nullable: true),
                     TopographyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CragId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    GradeId1 = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -185,18 +121,23 @@ namespace FontRecommender.Migrations
                 {
                     table.PrimaryKey("PK_Climb", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Climb_Coordinates_CoordinatesId",
-                        column: x => x.CoordinatesId,
-                        principalTable: "Coordinates",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_Climb_Crag_CragId",
                         column: x => x.CragId,
                         principalTable: "Crag",
                         principalColumn: "Id");
                     table.ForeignKey(
+                        name: "FK_Climb_Crag_CragId1",
+                        column: x => x.CragId1,
+                        principalTable: "Crag",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_Climb_Grade_GradeId",
                         column: x => x.GradeId,
+                        principalTable: "Grade",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Climb_Grade_GradeId1",
+                        column: x => x.GradeId1,
                         principalTable: "Grade",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -211,10 +152,38 @@ namespace FontRecommender.Migrations
                         principalColumn: "Id");
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Climb_CoordinatesId",
-                table: "Climb",
-                column: "CoordinatesId");
+            migrationBuilder.CreateTable(
+                name: "Coordinates",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ClimbId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CragId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TopographyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CoordinateType = table.Column<int>(type: "int", nullable: false),
+                    Longitude = table.Column<double>(type: "float", nullable: false),
+                    Latitude = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Coordinates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Coordinates_Climb_ClimbId",
+                        column: x => x.ClimbId,
+                        principalTable: "Climb",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Coordinates_Crag_CragId",
+                        column: x => x.CragId,
+                        principalTable: "Crag",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Coordinates_Topography_TopographyId",
+                        column: x => x.TopographyId,
+                        principalTable: "Topography",
+                        principalColumn: "Id");
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Climb_CragId",
@@ -222,9 +191,19 @@ namespace FontRecommender.Migrations
                 column: "CragId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Climb_CragId1",
+                table: "Climb",
+                column: "CragId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Climb_GradeId",
                 table: "Climb",
                 column: "GradeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Climb_GradeId1",
+                table: "Climb",
+                column: "GradeId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Climb_ModifiedDate",
@@ -243,13 +222,18 @@ namespace FontRecommender.Migrations
                 column: "WallTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CoordinatesCrag_CragId",
-                table: "CoordinatesCrag",
+                name: "IX_Coordinates_ClimbId",
+                table: "Coordinates",
+                column: "ClimbId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Coordinates_CragId",
+                table: "Coordinates",
                 column: "CragId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CoordinatesTopography_TopographyId",
-                table: "CoordinatesTopography",
+                name: "IX_Coordinates_TopographyId",
+                table: "Coordinates",
                 column: "TopographyId");
 
             migrationBuilder.CreateIndex(
@@ -279,28 +263,22 @@ namespace FontRecommender.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Coordinates");
+
+            migrationBuilder.DropTable(
                 name: "Climb");
-
-            migrationBuilder.DropTable(
-                name: "CoordinatesCrag");
-
-            migrationBuilder.DropTable(
-                name: "CoordinatesTopography");
-
-            migrationBuilder.DropTable(
-                name: "Grade");
-
-            migrationBuilder.DropTable(
-                name: "WallType");
 
             migrationBuilder.DropTable(
                 name: "Crag");
 
             migrationBuilder.DropTable(
-                name: "Coordinates");
+                name: "Grade");
 
             migrationBuilder.DropTable(
                 name: "Topography");
+
+            migrationBuilder.DropTable(
+                name: "WallType");
 
             migrationBuilder.DropTable(
                 name: "GradingSystem");
