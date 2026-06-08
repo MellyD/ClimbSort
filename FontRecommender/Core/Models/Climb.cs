@@ -4,8 +4,6 @@ namespace FontRecommender.Core.Models
 {
     public class Climb: BaseIdentity<Guid>
     {
-        public required double Longitude { get; set; }
-        public required double Latitude { get; set; }
         public virtual Grade? Grade { get; set; }
         public virtual required WallType WallType { get; set; }
         public int? Popularity { get; set; }

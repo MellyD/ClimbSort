@@ -200,6 +200,15 @@ namespace FontRecommender.Data.Repository
                 throw new Exception("An error occurred while retrieving the keyset paginated result set.", ex);
             }
         }
+
+        public async Task<TEntity?> FindInMemoryAsync(Func<TEntity, bool> predicate)
+        {
+            return await Task.FromResult(
+                _dbSet
+                    .AsEnumerable()
+                    .FirstOrDefault(predicate));
+        }
+
         public async Task CreateAsync(TEntity entity)
         {
             try

@@ -4,7 +4,7 @@ namespace FontRecommender.Core.Models.Generic
 {
     public class Coordinates
     {
-        public required int Id { get; set; }
+        public int Id { get; set; }
         public virtual Climb? Climb { get; set; }
         public virtual Crag? Crag { get; set; }
         public virtual Topography? Topography { get; set; }

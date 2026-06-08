@@ -16,6 +16,7 @@ namespace FontRecommender.Data.Repository
         (IQueryable<TView> paginatedResultSet, int numberOfPages) GetPaginatedQueryable<TView>(IQueryable<TView> resultSet, OffsetPaginateInsert paginateModel) where TView : class;
         Task<OffsetPaginateView<TView>> GetOffsetPaginatedResultSet<V, TView>(IQueryable<TEntity> resultSet, Expression<Func<TEntity, V>> sortingPredicate, OffsetPaginateInsert paginateModel) where TView : class;
         Task<KeysetPaginateView<TView>> GetKeysetPaginatedResultSet<V, TView>(IQueryable<TEntity> resultSet, Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, V>> sortingPredicate, Expression<Func<TEntity, Guid>> idSortingPredicate, KeysetPaginateInsert keysetPaginateInsert) where TView : class;
+        Task<TEntity?> FindInMemoryAsync(Func<TEntity, bool> predicate);
         Task CreateAsync(TEntity entity);
         Task UpdateAsync(TEntity entity);
         Task DeleteAsync(TEntity entity);

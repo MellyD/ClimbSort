@@ -35,7 +35,9 @@
         {
             Point = 1,
             SWPoint = 2,
-            NEPoint = 3
+            NEPoint = 3,
+            TopographyLine = 4,
+            CragPolygon = 5
         }
     }
 }
