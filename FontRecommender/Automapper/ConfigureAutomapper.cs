@@ -1,4 +1,8 @@
 ﻿using AutoMapper;
+using FontRecommender.Core.Models;
+using FontRecommender.Core.Models.Generic;
+using FontRecommender.Core.ViewModels;
+using FontRecommender.Core.ViewModels.Generic;
 
 namespace FontRecommender.Automapper
 {
@@ -6,7 +10,27 @@ namespace FontRecommender.Automapper
     {
         public ConfigureAutomapper()
         {
-            
+            CreateMap<Climb,ClimbModel>()
+                .ForMember(dest => dest.ClimbId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.CragId, opt => opt.MapFrom(src => src.Crag != null ? src.Crag.Id : (Guid?)null))
+                .ForMember(dest => dest.CragName, opt => opt.MapFrom(src => src.Crag != null ? src.Crag.Name : string.Empty))
+                .ForMember(dest => dest.GradeLabel, opt => opt.MapFrom(src => src.Grade != null ? src.Grade.GradeLabel : string.Empty))
+                .ForMember(dest => dest.WallTypeId, opt => opt.MapFrom(src => src.WallType.Id))
+                .ForMember(dest => dest.Coordinates, opt => opt.MapFrom(src => src.Coordinates));
+
+            CreateMap<Climb, ClimbSimpleModel>()
+                .ForMember(dest => dest.ClimbId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.CragName, opt => opt.MapFrom(src => src.Crag != null ? src.Crag.Name : string.Empty))
+                .ForMember(dest => dest.GradeLabel, opt => opt.MapFrom(src => src.Grade != null ? src.Grade.GradeLabel : string.Empty));
+
+            CreateMap<Coordinates, CoordinatesModel>();
+
+            CreateMap<Crag, CragModel>()
+                .ForMember(dest => dest.CragId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Coordinates, opt => opt.MapFrom(src => src.Coordinates));
+
+            CreateMap<Crag, CragSimpleModel>()
+                .ForMember(dest => dest.CragId, opt => opt.MapFrom(src => src.Id));
         }
     }
 }

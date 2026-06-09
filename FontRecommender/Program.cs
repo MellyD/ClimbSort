@@ -2,6 +2,8 @@ using Azure.Identity;
 using FontRecommender;
 using FontRecommender.Authentication;
 using FontRecommender.Automapper;
+using FontRecommender.Core.Interfaces;
+using FontRecommender.Core.Services;
 using FontRecommender.Data;
 using FontRecommender.Data.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +60,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddTransient(typeof(IFontService), typeof(FontService));
 builder.Services.AddTransient(typeof(IRepository<,>), typeof(Repository<,>));
 builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"],typeof(ConfigureAutomapper));
 builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec"));

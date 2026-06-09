@@ -55,7 +55,7 @@ builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec
 
 using IHost host = builder.Build();
 
-RunProgram(host.Services);
+await RunProgram(host.Services);
 host.Run();
 
 static async Task RunProgram(IServiceProvider services)
