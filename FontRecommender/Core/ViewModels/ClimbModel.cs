@@ -6,7 +6,6 @@ namespace FontRecommender.Core.ViewModels
 {
     public class ClimbModel: ClimbSimpleModel
     {
-        public required int WallTypeId { get; set; }
         public Guid? CragId { get; set; }
         public string? Description { get; set; }
         public virtual List<CoordinatesModel>? Coordinates { get; set; } = [];
@@ -14,6 +13,7 @@ namespace FontRecommender.Core.ViewModels
 
     public class ClimbSimpleModel
     {
+        public required int WallTypeId { get; set; }
         public Guid? ClimbId { get; set; }
         public required string Name { get; set; }
         public int? Popularity { get; set; }

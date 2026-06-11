@@ -39,5 +39,12 @@
             TopographyLine = 4,
             CragPolygon = 5
         }
+        public enum eTag
+        {
+            CragPopular = 1,
+            CragBeginnerFriendly = 2,
+            CragFamilyFriendly = 3,
+            CragDryFast = 4
+        }
     }
 }

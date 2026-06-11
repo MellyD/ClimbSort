@@ -10,7 +10,8 @@ namespace BoolderDataMigration
         {
             Climb = 1,
             Crag = 2,
-            Combine = 3
+            Combine = 3,
+            Enrich = 4
         }
     }
 }

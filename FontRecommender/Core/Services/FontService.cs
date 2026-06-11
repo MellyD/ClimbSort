@@ -45,12 +45,50 @@ namespace FontRecommender.Core.Services
             _logger = logger;
         }
 
+        public async Task<List<ClimbSimpleModel>> AdvancedGetClimbs(AdvancedClimbFilter filter)
+        {
+            try
+            {
+                List<ClimbSimpleModel> returnModels = [];
+
+                if (filter.FilterComponents == null || filter.FilterComponents.Count == 0)
+                {
+                    IEnumerable<ClimbSimpleModel> models = await GetClimbs(_mapper.Map<AdvancedClimbFilter, ClimbFilter>(filter));
+                    return models.ToList();
+                }
+
+                foreach(AdvancedClimbFilterComponent component in filter.FilterComponents)
+                {
+                    IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
+                        s => (string.IsNullOrEmpty(filter.Name) || s.Name.StartsWith(filter.Name)) &&
+                        (component.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= component.MinGradeScaleOrder)) &&
+                        (component.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= component.MaxGradeScaleOrder)) &&
+                        (component.CragId == null || (s.Crag != null && s.Crag.Id == component.CragId)) &&
+                        (component.MinRating == null || (s.Rating != null && s.Rating >= component.MinRating)) &&
+                        (component.MaxRating == null || (s.Rating != null && s.Rating <= component.MaxRating)) &&
+                        (component.MinPopularity == null || (s.Popularity != null && s.Popularity >= component.MinPopularity)) &&
+                        (component.MaxPopularity == null || (s.Popularity != null && s.Popularity <= component.MaxPopularity)) &&
+                        (component.WallTypeId == null || s.WallType.Id == component.WallTypeId)
+                        );
+
+                    IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
+                    returnModels.AddRange(models);
+                }
+                return returnModels;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get climbs, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
         public async Task<IEnumerable<ClimbSimpleModel>> GetClimbs(ClimbFilter filter)
         {
             try
             {
                 IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
-                    s => (string.IsNullOrEmpty(filter.Name) || s.Name.StartsWith(filter.Name, StringComparison.OrdinalIgnoreCase)) &&
+                    s => (string.IsNullOrEmpty(filter.Name) || s.Name.StartsWith(filter.Name)) &&
                     (filter.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= filter.MinGradeScaleOrder)) &&
                     (filter.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= filter.MaxGradeScaleOrder)) &&
                     (filter.CragId == null || (s.Crag != null && s.Crag.Id == filter.CragId)) &&
@@ -61,6 +99,8 @@ namespace FontRecommender.Core.Services
                     );
 
                 IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
+
+                models = models.Where(m => filter.WallTypeIds != null && filter.WallTypeIds.Count != 0 && filter.WallTypeIds.Contains(m.WallTypeId));
 
                 return models;
             }
@@ -218,7 +258,7 @@ namespace FontRecommender.Core.Services
             try
             {
                 IQueryable<Crag> crags = _cragRepo.FindAllAsQueryable(c =>
-                    (filter.Name == null || c.Name.StartsWith(filter.Name, StringComparison.InvariantCultureIgnoreCase)) &&
+                    (filter.Name == null || c.Name.StartsWith(filter.Name)) &&
                     (filter.CountryCode == null || c.CountryCode == filter.CountryCode));
                 IEnumerable<CragSimpleModel> models = _mapper.Map<IEnumerable<Crag>, IEnumerable<CragSimpleModel>>(crags.ToList());
                 return models;

@@ -4,6 +4,7 @@ using FontRecommender.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FontRecommender.Migrations
 {
     [DbContext(typeof(FontRecommendationDBContext))]
-    partial class FontRecommendationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260611132458_TagTweak")]
+    partial class TagTweak
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,9 +108,6 @@ namespace FontRecommender.Migrations
 
                     b.Property<decimal?>("Rating")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("SearchName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("SitStart")
                         .HasColumnType("bit");

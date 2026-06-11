@@ -1,0 +1,13 @@
+﻿using FontRecommender.Core.Models.Generic;
+
+namespace FontRecommender.Core.Models
+{
+    public class Circuit: BaseIdentity<Guid>
+    {
+        public required string Colour { get; set; }
+        public virtual Grade? Grade { get; set; }
+        public bool? Beginner { get; set; }
+        public bool? Dangerous { get; set; }
+        public virtual List<Coordinates> Coordinates { get; } = [];
+    }
+}

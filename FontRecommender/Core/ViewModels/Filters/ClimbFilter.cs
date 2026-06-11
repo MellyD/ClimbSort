@@ -12,4 +12,22 @@
         public int? MinPopularity { get; set; }
         public int? MaxPopularity { get; set; }
     }
+
+    public class AdvancedClimbFilter
+    {
+        public string? Name { get; set; } = default;
+        public List<AdvancedClimbFilterComponent>? FilterComponents { get; set; }
+    }
+
+    public class AdvancedClimbFilterComponent
+    {
+        public int? WallTypeId { get; set; }
+        public Guid? CragId { get; set; }
+        public int? MinGradeScaleOrder { get; set; }
+        public int? MaxGradeScaleOrder { get; set; }
+        public decimal? MinRating { get; set; }
+        public decimal? MaxRating { get; set; }
+        public int? MinPopularity { get; set; }
+        public int? MaxPopularity { get; set; }
+    }
 }

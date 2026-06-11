@@ -2,6 +2,7 @@
 using AutoMapper.Features;
 using BoolderDataMigration.Core.Interface;
 using BoolderDataMigration.Core.ViewModels;
+using BoolderDataMigration.Models;
 using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
 using FontRecommender.Data;
@@ -26,6 +27,12 @@ namespace BoolderDataMigration.Core.Service
         private readonly IRepository<FontRecommendationDBContext, Topography> _topographyRepo;
         private readonly IRepository<FontRecommendationDBContext, WallType> _wallTypeRepo;
         private readonly IRepository<FontRecommendationDBContext, Coordinates> _coordinatesRepo;
+        private readonly IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> _circuitRepo;
+        private readonly IRepository<BoolderContext, Area> _boolderAreaRepo;
+        private readonly IRepository<BoolderContext, Problem> _boolderProblemRepo;
+        private readonly IRepository<BoolderContext, Line> _boolderLineRepo;
+        private readonly IRepository<BoolderContext, Topo> _boolderTopoRepo;
+        private readonly IRepository<BoolderContext, Models.Circuit> _boolderCircuitRepo;
         private readonly IMapper _mapper;
 
         public MigrationService(
@@ -36,6 +43,12 @@ namespace BoolderDataMigration.Core.Service
             IRepository<FontRecommendationDBContext, Topography> topographyRepo,
             IRepository<FontRecommendationDBContext, WallType> wallTypeRepo,
             IRepository<FontRecommendationDBContext, Coordinates> coordinatesRepo,
+            IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> circuitRepo,
+            IRepository<BoolderContext, Area> boolderAreaRepo,
+            IRepository<BoolderContext, Problem> boolderProblemRepo,
+            IRepository<BoolderContext, Line> boolderLineRepo,
+            IRepository<BoolderContext, Topo> boolderTopoRepo,
+            IRepository<BoolderContext, Models.Circuit> boolderCircuitRepo,
             IMapper mapper
             ) 
         {
@@ -46,9 +59,180 @@ namespace BoolderDataMigration.Core.Service
             _topographyRepo = topographyRepo;
             _wallTypeRepo = wallTypeRepo;
             _coordinatesRepo = coordinatesRepo;
+            _circuitRepo = circuitRepo;
+            _boolderAreaRepo = boolderAreaRepo;
+            _boolderProblemRepo = boolderProblemRepo;
+            _boolderLineRepo = boolderLineRepo;
+            _boolderTopoRepo = boolderTopoRepo;
+            _boolderCircuitRepo = boolderCircuitRepo;
             _mapper = mapper;
         }
         #endregion
+
+        public async Task<bool> MigrateAllData()
+        {
+            try
+            {
+                #region Crags
+                List<Area> areas = _boolderAreaRepo.GetAll().ToList();
+                foreach (Area area in areas)
+                {
+                    Crag crag = new()
+                    {
+                        Name = area.Name,
+                        CountryCode = "FRA",
+                        CreatedDate = DateTime.Now,
+                        ModifiedDate = DateTime.Now,
+                        Description = area.DescriptionEn,
+                        SearchName = area.NameSearchable,
+                        Id = Guid.NewGuid()
+                    };
+                    List<string>? tagStrings = area.Tags?.Split(",").ToList();
+                    foreach(string tagString in tagStrings ?? new List<string>())
+                    {
+                        if (!string.IsNullOrEmpty(tagString))
+                        {
+                            switch (tagString)
+                            {
+                                case "popular":
+                                    Tag tag = new()
+                                    {
+                                        TagType = eTag.CragPopular
+                                    };
+                                    crag.Tags.Add(tag);
+                                    break;
+                                case "beginner_friendly":
+                                    Tag beginnerTag = new()
+                                    {
+                                        TagType = eTag.CragBeginnerFriendly
+                                    };
+                                    crag.Tags.Add(beginnerTag);
+                                    break;
+                                case "family_friendly":
+                                    Tag familyTag = new()
+                                    {
+                                        TagType = eTag.CragFamilyFriendly
+                                    };
+                                    crag.Tags.Add(familyTag);
+                                    break;
+                                case "dry_fast":
+                                    Tag dryTag = new()
+                                    {
+                                        TagType = eTag.CragDryFast
+                                    };
+                                    crag.Tags.Add(dryTag);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+
+                    Coordinates swCoordinates = new()
+                    {
+                        CoordinateType = eCoordinateType.SWPoint,
+                        Latitude = area.SouthWestLat,
+                        Longitude = area.SouthWestLon,
+                        Crag = crag
+                    };
+                    Coordinates neCoordinates = new()
+                    {
+                        CoordinateType = eCoordinateType.NEPoint,
+                        Latitude = area.NorthEastLat,
+                        Longitude = area.NorthEastLon,
+                        Crag = crag
+                    };
+                    crag.Coordinates.Add(swCoordinates);
+                    crag.Coordinates.Add(neCoordinates);
+
+                    await _cragRepo.CreateAsync(crag);
+                }
+                #endregion
+
+                #region Circuits
+                List<Models.Circuit> circuits = _boolderCircuitRepo.GetAll().ToList();
+                
+                foreach(Models.Circuit circuit in circuits)
+                {
+                    FontRecommender.Core.Models.Circuit newCircuit = new()
+                    {
+                        Colour = circuit.Color,
+                        Beginner = circuit.BeginnerFriendly == 1,
+                        Dangerous = circuit.Dangerous == 1,
+                        Grade = await _gradeRepo.FindAsync(g => g.GradeLabel.ToLower() == circuit.AverageGrade.ToLower()) ?? throw new KeyNotFoundException($"Grade {circuit.AverageGrade} not found in database"),
+                        CreatedDate = DateTime.Now,
+                        ModifiedDate = DateTime.Now,
+                        Id = Guid.NewGuid()
+                    };
+                    Coordinates swCoordinates = new()
+                    {
+                        CoordinateType = eCoordinateType.SWPoint,
+                        Latitude = circuit.SouthWestLat,
+                        Longitude = circuit.SouthWestLon,
+                        Circuit = newCircuit
+                    };
+                    Coordinates neCoordinates = new()
+                    {
+                        CoordinateType = eCoordinateType.NEPoint,
+                        Latitude = circuit.NorthEastLat,
+                        Longitude = circuit.NorthEastLon,
+                        Circuit = newCircuit
+                    };
+                    newCircuit.Coordinates.Add(swCoordinates);
+                    newCircuit.Coordinates.Add(neCoordinates);
+                    await _circuitRepo.CreateAsync(newCircuit);
+                }
+                #endregion
+
+                #region Climbs
+                List<Problem> problems = _boolderProblemRepo.GetAll().ToList();
+
+                foreach(Problem problem in problems)
+                {
+                    string wallTypeName = "";
+                    switch (problem.Steepness)
+                    {
+                        case "wall":
+                            wallTypeName = "Vertical";
+                            break;
+                        case "overhang":
+                            wallTypeName = "Steep";
+                            break;
+                        default:
+                            wallTypeName = problem.Steepness;
+                            break;
+                    }
+                    WallType walltype = await _wallTypeRepo.FindAsync(w => w.Description.ToLower() == wallTypeName.ToLower()) ?? throw new KeyNotFoundException($"Wall type {wallTypeName} not found in database");
+                    Climb climb = new()
+                    {
+                        Name = problem.Name ?? "Unknown",
+                        Grade = await _gradeRepo.FindAsync(g => g.GradeLabel.ToLower() == problem.Grade.ToLower()) ?? throw new KeyNotFoundException($"Grade {problem.Grade} not found in database"),
+                        Popularity = problem.Popularity,
+                        CreatedDate = DateTime.Now,
+                        ModifiedDate = DateTime.Now,
+                        Id = Guid.NewGuid(),
+                        WallType = walltype,
+                        SitStart = problem.SitStart == 1,
+                        SearchName = problem.NameSearchable
+                    };
+                    Coordinates climbCoordinates = new()
+                    {
+                        Climb = climb,
+                        CoordinateType = eCoordinateType.Point,
+                        Latitude = problem.Latitude,
+                        Longitude = problem.Longitude
+                    };
+                    climb.Coordinates.Add(climbCoordinates);
+                    await _climbRepo.CreateAsync(climb);
+                }
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
 
         public async Task<bool> MigrateData(string filePath, eDataType eDataType)
         {
@@ -303,6 +487,26 @@ namespace BoolderDataMigration.Core.Service
                                 //}
                             }
                         }
+                        return true;
+
+                    case eDataType.Enrich:
+                        BoolderClimbData extraClimbData = JsonSerializer.Deserialize<BoolderClimbData>(contents) ?? throw new JsonException("Failed to deserialise data");
+                        foreach (ClimbFeature feature in extraClimbData.Features)
+                        {
+                            Climb climb = await _climbRepo.FindAsync(c => c.Name == feature.Properties.Name) ?? throw new KeyNotFoundException($"Climb {feature.Properties.Name} not found in database");
+                            Topography topography = new()
+                            {
+                                CreatedDate = DateTime.Now,
+                                Climb = climb,
+                                Id = Guid.NewGuid(),
+                                ModifiedDate = DateTime.Now,
+                                FileReference = $"https://assets.boolder.com/proxy/topos/{feature.Properties.Id}"
+                            };
+                            await _topographyRepo.CreateAsync(topography);
+
+
+                        }
+
                         return true;
                     default:
                         return true;

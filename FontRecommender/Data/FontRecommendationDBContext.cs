@@ -22,6 +22,20 @@ namespace FontRecommender.Data
 
                 entity.ToTable("Topography").HasIndex(s => s.ModifiedDate).IsDescending(true);
             });
+            modelBuilder.Entity<Circuit>(entity =>
+            {
+                entity
+                .HasMany(s => s.Coordinates)
+                .WithOne(c => c.Circuit)
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity
+                .HasOne(s => s.Grade)
+                .WithMany()
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity.ToTable("Circuit").HasIndex(s => s.ModifiedDate).IsDescending(true);
+            });
             modelBuilder.Entity<GradingSystem>().ToTable("GradingSystem");
             modelBuilder.Entity<WallType>().ToTable("WallType");
             modelBuilder.Entity<Crag>(entity =>
@@ -31,9 +45,15 @@ namespace FontRecommender.Data
                 .WithOne(c => c.Crag)
                 .OnDelete(DeleteBehavior.NoAction);
 
+                entity
+                .HasMany(s => s.Tags)
+                .WithOne(c => c.Crag)
+                .OnDelete(DeleteBehavior.NoAction);
+
                 entity.ToTable("Crag").HasIndex(s => s.ModifiedDate).IsDescending(true);
             });
             modelBuilder.Entity<Coordinates>().ToTable("Coordinates");
+            modelBuilder.Entity<Tag>().ToTable("Tag");
             modelBuilder.Entity<Grade>(entity =>
             {
                 entity
@@ -53,9 +73,19 @@ namespace FontRecommender.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
                 entity
+                .HasMany(s => s.Tags)
+                .WithOne(c => c.Climb)
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity
                 .HasOne(s => s.Grade)
                 .WithMany()
-                .OnDelete(DeleteBehavior.NoAction); 
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity
+                .HasOne(s => s.Circuit)
+                .WithMany()
+                .OnDelete(DeleteBehavior.NoAction);
 
                 entity
                 .HasOne(s => s.Topography)

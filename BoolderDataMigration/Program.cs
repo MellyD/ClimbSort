@@ -1,6 +1,7 @@
 ﻿using BoolderDataMigration.AutoMapper;
 using BoolderDataMigration.Core.Interface;
 using BoolderDataMigration.Core.Service;
+using BoolderDataMigration.Models;
 using FontRecommender;
 using FontRecommender.Automapper;
 using FontRecommender.Data;
@@ -36,6 +37,11 @@ builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif
+});
+
+builder.Services.AddDbContext<BoolderContext>(options =>
+{
+    options.UseLazyLoadingProxies().UseSqlite("Data Source=boolder.db");
 });
 
 builder.Services.AddSerilog((context, configuration) =>

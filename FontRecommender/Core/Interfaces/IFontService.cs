@@ -5,6 +5,7 @@ namespace FontRecommender.Core.Interfaces
 {
     public interface IFontService
     {
+        Task<List<ClimbSimpleModel>> AdvancedGetClimbs(AdvancedClimbFilter filter);
         Task<IEnumerable<ClimbSimpleModel>> GetClimbs(ClimbFilter filter);
         Task<ClimbModel> GetClimb(Guid climbId);
         Task<Guid> CreateClimb(ClimbModel model);

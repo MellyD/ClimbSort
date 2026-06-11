@@ -31,6 +31,21 @@ namespace FontRecommender.Controllers
             }
         }
 
+        [HttpPost("/api/[controller]/AdvancedFilter")]
+        public async Task<IActionResult> AdvancedGetClimbs([FromBody] AdvancedClimbFilter filter)
+        {
+            try
+            {
+                List<ClimbSimpleModel> climbs = await _fontService.AdvancedGetClimbs(filter);
+                return Ok(climbs);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting climbs.");
+                return Problem();
+            }
+        }
+
         [HttpGet("/api/[controller]/{climbId}")]
         public async Task<IActionResult> GetClimb(Guid climbId)
         {
