@@ -39,9 +39,14 @@ builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 #endif
 });
 
+var dbPath = Path.Combine(
+    AppContext.BaseDirectory,
+    "boolder.db");
+
 builder.Services.AddDbContext<BoolderContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlite("Data Source=boolder.db");
+    options.UseLazyLoadingProxies()
+           .UseSqlite($"Data Source={dbPath}");
 });
 
 builder.Services.AddSerilog((context, configuration) =>
@@ -70,6 +75,6 @@ static async Task RunProgram(IServiceProvider services)
     var provider = scope.ServiceProvider;
     var service = provider.GetService<IMigrationService>();
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-    bool migrationSucceeded = await service?.MigrateData("G:\\David\\Documents\\Work\\CODE\\clusters.geojson", eDataType.Combine);
+    bool migrationSucceeded = await service?.MigrateAllData();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 }

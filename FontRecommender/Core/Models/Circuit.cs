@@ -9,5 +9,6 @@ namespace FontRecommender.Core.Models
         public bool? Beginner { get; set; }
         public bool? Dangerous { get; set; }
         public virtual List<Coordinates> Coordinates { get; } = [];
+        public virtual List<Climb> Climbs { get; } = [];
     }
 }

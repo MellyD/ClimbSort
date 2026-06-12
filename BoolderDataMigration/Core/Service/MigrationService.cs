@@ -75,157 +75,248 @@ namespace BoolderDataMigration.Core.Service
             {
                 #region Crags
                 List<Area> areas = _boolderAreaRepo.GetAll().ToList();
+                int cragCounter = 0;
                 foreach (Area area in areas)
                 {
-                    Crag crag = new()
+                    try
                     {
-                        Name = area.Name,
-                        CountryCode = "FRA",
-                        CreatedDate = DateTime.Now,
-                        ModifiedDate = DateTime.Now,
-                        Description = area.DescriptionEn,
-                        SearchName = area.NameSearchable,
-                        Id = Guid.NewGuid()
-                    };
-                    List<string>? tagStrings = area.Tags?.Split(",").ToList();
-                    foreach(string tagString in tagStrings ?? new List<string>())
-                    {
-                        if (!string.IsNullOrEmpty(tagString))
+                        Crag crag = new()
                         {
-                            switch (tagString)
+                            Name = area.Name,
+                            CountryCode = "FRA",
+                            CreatedDate = DateTime.Now,
+                            ModifiedDate = DateTime.Now,
+                            Description = area.DescriptionEn,
+                            SearchName = area.NameSearchable,
+                            Id = Guid.NewGuid()
+                        };
+                        List<string>? tagStrings = area.Tags?.Split(",").ToList();
+                        foreach (string tagString in tagStrings ?? new List<string>())
+                        {
+                            if (!string.IsNullOrEmpty(tagString))
                             {
-                                case "popular":
-                                    Tag tag = new()
-                                    {
-                                        TagType = eTag.CragPopular
-                                    };
-                                    crag.Tags.Add(tag);
-                                    break;
-                                case "beginner_friendly":
-                                    Tag beginnerTag = new()
-                                    {
-                                        TagType = eTag.CragBeginnerFriendly
-                                    };
-                                    crag.Tags.Add(beginnerTag);
-                                    break;
-                                case "family_friendly":
-                                    Tag familyTag = new()
-                                    {
-                                        TagType = eTag.CragFamilyFriendly
-                                    };
-                                    crag.Tags.Add(familyTag);
-                                    break;
-                                case "dry_fast":
-                                    Tag dryTag = new()
-                                    {
-                                        TagType = eTag.CragDryFast
-                                    };
-                                    crag.Tags.Add(dryTag);
-                                    break;
-                                default:
-                                    break;
+                                switch (tagString)
+                                {
+                                    case "popular":
+                                        Tag tag = new()
+                                        {
+                                            TagType = eTag.CragPopular
+                                        };
+                                        crag.Tags.Add(tag);
+                                        break;
+                                    case "beginner_friendly":
+                                        Tag beginnerTag = new()
+                                        {
+                                            TagType = eTag.CragBeginnerFriendly
+                                        };
+                                        crag.Tags.Add(beginnerTag);
+                                        break;
+                                    case "family_friendly":
+                                        Tag familyTag = new()
+                                        {
+                                            TagType = eTag.CragFamilyFriendly
+                                        };
+                                        crag.Tags.Add(familyTag);
+                                        break;
+                                    case "dry_fast":
+                                        Tag dryTag = new()
+                                        {
+                                            TagType = eTag.CragDryFast
+                                        };
+                                        crag.Tags.Add(dryTag);
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
+
+                        Coordinates swCoordinates = new()
+                        {
+                            CoordinateType = eCoordinateType.SWPoint,
+                            Latitude = area.SouthWestLat,
+                            Longitude = area.SouthWestLon,
+                            Crag = crag
+                        };
+                        Coordinates neCoordinates = new()
+                        {
+                            CoordinateType = eCoordinateType.NEPoint,
+                            Latitude = area.NorthEastLat,
+                            Longitude = area.NorthEastLon,
+                            Crag = crag
+                        };
+                        crag.Coordinates.Add(swCoordinates);
+                        crag.Coordinates.Add(neCoordinates);
+
+                        await _cragRepo.CreateAsync(crag);
+                        cragCounter++;
                     }
-
-                    Coordinates swCoordinates = new()
+                    catch (Exception ex) 
                     {
-                        CoordinateType = eCoordinateType.SWPoint,
-                        Latitude = area.SouthWestLat,
-                        Longitude = area.SouthWestLon,
-                        Crag = crag
-                    };
-                    Coordinates neCoordinates = new()
-                    {
-                        CoordinateType = eCoordinateType.NEPoint,
-                        Latitude = area.NorthEastLat,
-                        Longitude = area.NorthEastLon,
-                        Crag = crag
-                    };
-                    crag.Coordinates.Add(swCoordinates);
-                    crag.Coordinates.Add(neCoordinates);
-
-                    await _cragRepo.CreateAsync(crag);
+                        Console.WriteLine($"Failed to migrate area {area.Name}: {ex.Message}");
+                        continue;
+                    }
                 }
+                Console.WriteLine($"Imported {cragCounter} Crags");
                 #endregion
 
                 #region Circuits
                 List<Models.Circuit> circuits = _boolderCircuitRepo.GetAll().ToList();
-                
-                foreach(Models.Circuit circuit in circuits)
+
+                int circuitCounter = 0;
+                foreach (Models.Circuit circuit in circuits)
                 {
-                    FontRecommender.Core.Models.Circuit newCircuit = new()
+                    try
                     {
-                        Colour = circuit.Color,
-                        Beginner = circuit.BeginnerFriendly == 1,
-                        Dangerous = circuit.Dangerous == 1,
-                        Grade = await _gradeRepo.FindAsync(g => g.GradeLabel.ToLower() == circuit.AverageGrade.ToLower()) ?? throw new KeyNotFoundException($"Grade {circuit.AverageGrade} not found in database"),
-                        CreatedDate = DateTime.Now,
-                        ModifiedDate = DateTime.Now,
-                        Id = Guid.NewGuid()
-                    };
-                    Coordinates swCoordinates = new()
-                    {
-                        CoordinateType = eCoordinateType.SWPoint,
-                        Latitude = circuit.SouthWestLat,
-                        Longitude = circuit.SouthWestLon,
-                        Circuit = newCircuit
-                    };
-                    Coordinates neCoordinates = new()
-                    {
-                        CoordinateType = eCoordinateType.NEPoint,
-                        Latitude = circuit.NorthEastLat,
-                        Longitude = circuit.NorthEastLon,
-                        Circuit = newCircuit
-                    };
-                    newCircuit.Coordinates.Add(swCoordinates);
-                    newCircuit.Coordinates.Add(neCoordinates);
-                    await _circuitRepo.CreateAsync(newCircuit);
+                        FontRecommender.Core.Models.Circuit newCircuit = new()
+                        {
+                            Colour = circuit.Color,
+                            Beginner = circuit.BeginnerFriendly == 1,
+                            Dangerous = circuit.Dangerous == 1,
+                            Grade = await _gradeRepo.FindAsync(g => g.GradeLabel.ToLower() == circuit.AverageGrade.ToLower()) ?? throw new KeyNotFoundException($"Grade {circuit.AverageGrade} not found in database"),
+                            CreatedDate = DateTime.Now,
+                            ModifiedDate = DateTime.Now,
+                            Id = Guid.NewGuid()
+                        };
+                        Coordinates swCoordinates = new()
+                        {
+                            CoordinateType = eCoordinateType.SWPoint,
+                            Latitude = circuit.SouthWestLat,
+                            Longitude = circuit.SouthWestLon,
+                            Circuit = newCircuit
+                        };
+                        Coordinates neCoordinates = new()
+                        {
+                            CoordinateType = eCoordinateType.NEPoint,
+                            Latitude = circuit.NorthEastLat,
+                            Longitude = circuit.NorthEastLon,
+                            Circuit = newCircuit
+                        };
+                        newCircuit.Coordinates.Add(swCoordinates);
+                        newCircuit.Coordinates.Add(neCoordinates);
+                        await _circuitRepo.CreateAsync(newCircuit);
+                        circuitCounter++;
+                    }
+                    catch(Exception ex) {
+                        Console.WriteLine($"Failed to migrate circuit {circuit.Color}: {ex.Message}");
+                        continue;
+                    }
                 }
+                Console.WriteLine($"Imported {circuitCounter} Circuits");
                 #endregion
 
                 #region Climbs
                 List<Problem> problems = _boolderProblemRepo.GetAll().ToList();
 
-                foreach(Problem problem in problems)
+                int problemCounter = 0;
+                foreach (Problem problem in problems)
                 {
-                    string wallTypeName = "";
-                    switch (problem.Steepness)
+                    try
                     {
-                        case "wall":
-                            wallTypeName = "Vertical";
-                            break;
-                        case "overhang":
-                            wallTypeName = "Steep";
-                            break;
-                        default:
-                            wallTypeName = problem.Steepness;
-                            break;
+                        string wallTypeName = "";
+                        switch (problem.Steepness)
+                        {
+                            case "wall":
+                                wallTypeName = "Vertical";
+                                break;
+                            case "overhang":
+                                wallTypeName = "Steep";
+                                break;
+                            default:
+                                wallTypeName = problem.Steepness;
+                                break;
+                        }
+                        WallType walltype = await _wallTypeRepo.FindAsync(w => w.Description.ToLower() == wallTypeName.ToLower()) ?? throw new KeyNotFoundException($"Wall type {wallTypeName} not found in database");
+                        Climb climb = new()
+                        {
+                            Name = problem.Name ?? "Unknown",
+                            Grade = await _gradeRepo.FindAsync(g => problem.Grade != null && g.GradeLabel.ToLower() == problem.Grade.ToLower()) ?? throw new KeyNotFoundException($"Grade {problem.Grade} not found in database"),
+                            Popularity = problem.Popularity,
+                            CreatedDate = DateTime.Now,
+                            ModifiedDate = DateTime.Now,
+                            Id = Guid.NewGuid(),
+                            WallType = walltype,
+                            SitStart = problem.SitStart == 1,
+                            SearchName = problem.NameSearchable
+                        };
+
+                        Area? areaForSearch = areas.Where(a => a.Id == problem.AreaId).FirstOrDefault();
+                        if (areaForSearch != null)
+                            climb.Crag = await _cragRepo.FindAsync(c => c.Name == areaForSearch.Name) ?? throw new KeyNotFoundException($"Crag with name {areaForSearch.Name} not found in database");
+
+                        Models.Circuit? circuitforSearch = circuits.Where(c => c.Id == problem.CircuitId).FirstOrDefault();
+                        if (circuitforSearch != null)
+                            climb.Circuit = await _circuitRepo.FindAsync(c => c.Colour == circuitforSearch.Color) ?? throw new KeyNotFoundException($"Circuit with colour {circuitforSearch.Color} not found in database");
+
+                        Coordinates climbCoordinates = new()
+                        {
+                            Climb = climb,
+                            CoordinateType = eCoordinateType.Point,
+                            Latitude = problem.Latitude,
+                            Longitude = problem.Longitude
+                        };
+                        climb.Coordinates.Add(climbCoordinates);
+                        await _climbRepo.CreateAsync(climb);
+                        problemCounter++;
                     }
-                    WallType walltype = await _wallTypeRepo.FindAsync(w => w.Description.ToLower() == wallTypeName.ToLower()) ?? throw new KeyNotFoundException($"Wall type {wallTypeName} not found in database");
-                    Climb climb = new()
+                    catch (Exception ex) 
                     {
-                        Name = problem.Name ?? "Unknown",
-                        Grade = await _gradeRepo.FindAsync(g => g.GradeLabel.ToLower() == problem.Grade.ToLower()) ?? throw new KeyNotFoundException($"Grade {problem.Grade} not found in database"),
-                        Popularity = problem.Popularity,
-                        CreatedDate = DateTime.Now,
-                        ModifiedDate = DateTime.Now,
-                        Id = Guid.NewGuid(),
-                        WallType = walltype,
-                        SitStart = problem.SitStart == 1,
-                        SearchName = problem.NameSearchable
-                    };
-                    Coordinates climbCoordinates = new()
-                    {
-                        Climb = climb,
-                        CoordinateType = eCoordinateType.Point,
-                        Latitude = problem.Latitude,
-                        Longitude = problem.Longitude
-                    };
-                    climb.Coordinates.Add(climbCoordinates);
-                    await _climbRepo.CreateAsync(climb);
+                        Console.WriteLine($"Failed to create climb: {ex.Message}");
+                        continue;
+                    }
                 }
+                Console.WriteLine($"Imported {problemCounter} Problems");
                 #endregion
+
+                #region Topographies
+                List<Line> lines = _boolderLineRepo.GetAll().ToList();
+
+                int topoCounter = 0;
+                foreach (Line line in lines)
+                {
+                    try
+                    {
+                        Problem? problemForSearch = problems.Where(p => p.Id == line.ProblemId).FirstOrDefault();
+                        if (problemForSearch != null)
+                        {
+                            Climb climb = await _climbRepo.FindAsync(c => c.Name == problemForSearch.Name) ?? throw new KeyNotFoundException($"Climb with name {problemForSearch.Name} not found in database");
+                            Topography topography = new()
+                            {
+                                Climb = climb,
+                                CreatedDate = DateTime.Now,
+                                ModifiedDate = DateTime.Now,
+                                Id = Guid.NewGuid(),
+                                FileReference = $"https://assets.boolder.com/proxy/topos/{problemForSearch.BleauInfoId}"
+                            };
+                            if(line.Coordinates != null)
+                            {
+                                List<TopoCoordinates> topoCoordinates = JsonSerializer.Deserialize<List<TopoCoordinates>>(line.Coordinates) ?? throw new JsonException("Failed to deserialise topo coordinates");
+                                foreach(TopoCoordinates topoCoordinate in topoCoordinates)
+                                {
+                                    Coordinates topographyCoordinate = new()
+                                    {
+                                        Topography = topography,
+                                        CoordinateType = eCoordinateType.TopographyLine,
+                                        Latitude = topoCoordinate.Y,
+                                        Longitude = topoCoordinate.X
+                                    };
+                                    topography.Coordinates.Add(topographyCoordinate);
+                                }
+                            }
+                            await _topographyRepo.CreateAsync(topography);
+                            topoCounter++;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"Failed to create topography for line with id {line.Id}: {ex.Message}");
+                        continue;
+                    }
+                }
+                Console.WriteLine($"Imported {topoCounter} Topographies");
+                #endregion
+
+                return true;
             }
             catch (Exception ex)
             {

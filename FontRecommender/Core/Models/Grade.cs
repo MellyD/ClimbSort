@@ -11,6 +11,5 @@ namespace FontRecommender.Core.Models
         public decimal MinDifficultyRank { get; set; }
         public decimal MaxDifficultyRank { get; set; }
         public decimal? MeanDifficultyRank { get; set; }
-        public virtual List<Climb> Climbs { get; } = [];
     }
 }

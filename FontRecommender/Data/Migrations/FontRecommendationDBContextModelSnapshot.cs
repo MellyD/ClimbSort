@@ -75,9 +75,6 @@ namespace FontRecommender.Migrations
                     b.Property<Guid?>("CragId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CragId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -85,9 +82,6 @@ namespace FontRecommender.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("GradeId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("GradeId1")
                         .HasColumnType("int");
 
                     b.Property<string>("Link")
@@ -124,11 +118,7 @@ namespace FontRecommender.Migrations
 
                     b.HasIndex("CragId");
 
-                    b.HasIndex("CragId1");
-
                     b.HasIndex("GradeId");
-
-                    b.HasIndex("GradeId1");
 
                     b.HasIndex("ModifiedDate")
                         .IsDescending();
@@ -239,7 +229,7 @@ namespace FontRecommender.Migrations
 
                     b.HasIndex("CragId");
 
-                    b.ToTable("Tag");
+                    b.ToTable("Tag", (string)null);
                 });
 
             modelBuilder.Entity("FontRecommender.Core.Models.Grade", b =>
@@ -374,27 +364,19 @@ namespace FontRecommender.Migrations
             modelBuilder.Entity("FontRecommender.Core.Models.Climb", b =>
                 {
                     b.HasOne("FontRecommender.Core.Models.Circuit", "Circuit")
-                        .WithMany()
+                        .WithMany("Climbs")
                         .HasForeignKey("CircuitId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FontRecommender.Core.Models.Crag", "Crag")
-                        .WithMany()
+                        .WithMany("Climbs")
                         .HasForeignKey("CragId")
                         .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("FontRecommender.Core.Models.Crag", null)
-                        .WithMany("Climbs")
-                        .HasForeignKey("CragId1");
 
                     b.HasOne("FontRecommender.Core.Models.Grade", "Grade")
                         .WithMany()
                         .HasForeignKey("GradeId")
                         .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("FontRecommender.Core.Models.Grade", null)
-                        .WithMany("Climbs")
-                        .HasForeignKey("GradeId1");
 
                     b.HasOne("FontRecommender.Core.Models.Topography", "Topography")
                         .WithMany()
@@ -453,11 +435,13 @@ namespace FontRecommender.Migrations
                 {
                     b.HasOne("FontRecommender.Core.Models.Climb", "Climb")
                         .WithMany("Tags")
-                        .HasForeignKey("ClimbId");
+                        .HasForeignKey("ClimbId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("FontRecommender.Core.Models.Crag", "Crag")
                         .WithMany("Tags")
-                        .HasForeignKey("CragId");
+                        .HasForeignKey("CragId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Climb");
 
@@ -488,6 +472,8 @@ namespace FontRecommender.Migrations
 
             modelBuilder.Entity("FontRecommender.Core.Models.Circuit", b =>
                 {
+                    b.Navigation("Climbs");
+
                     b.Navigation("Coordinates");
                 });
 
@@ -505,11 +491,6 @@ namespace FontRecommender.Migrations
                     b.Navigation("Coordinates");
 
                     b.Navigation("Tags");
-                });
-
-            modelBuilder.Entity("FontRecommender.Core.Models.Grade", b =>
-                {
-                    b.Navigation("Climbs");
                 });
 
             modelBuilder.Entity("FontRecommender.Core.Models.Topography", b =>

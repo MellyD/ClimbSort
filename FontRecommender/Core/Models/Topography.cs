@@ -6,6 +6,6 @@ namespace FontRecommender.Core.Models
     {
         public string? FileReference { get; set; }
         public virtual required Climb Climb { get; set; }
-        public virtual List<Coordinates>? Coordinates { get; } = [];
+        public virtual List<Coordinates> Coordinates { get; } = [];
     }
 }

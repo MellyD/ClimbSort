@@ -30,6 +30,11 @@ namespace FontRecommender.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
                 entity
+                .HasMany(s => s.Climbs)
+                .WithOne(c => c.Circuit)
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity
                 .HasOne(s => s.Grade)
                 .WithMany()
                 .OnDelete(DeleteBehavior.NoAction);
@@ -47,6 +52,11 @@ namespace FontRecommender.Data
 
                 entity
                 .HasMany(s => s.Tags)
+                .WithOne(c => c.Crag)
+                .OnDelete(DeleteBehavior.NoAction);
+
+                entity
+                .HasMany(s => s.Climbs)
                 .WithOne(c => c.Crag)
                 .OnDelete(DeleteBehavior.NoAction);
 
@@ -83,22 +93,12 @@ namespace FontRecommender.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
                 entity
-                .HasOne(s => s.Circuit)
-                .WithMany()
-                .OnDelete(DeleteBehavior.NoAction);
-
-                entity
                 .HasOne(s => s.Topography)
                 .WithMany()
                 .OnDelete(DeleteBehavior.ClientCascade);
 
                 entity
                 .HasOne(s => s.WallType)
-                .WithMany()
-                .OnDelete(DeleteBehavior.NoAction);
-
-                entity
-                .HasOne(s => s.Crag)
                 .WithMany()
                 .OnDelete(DeleteBehavior.NoAction);
 
