@@ -237,7 +237,7 @@ namespace BoolderDataMigration.Core.Service
                             Id = Guid.NewGuid(),
                             WallType = walltype,
                             SitStart = problem.SitStart == 1,
-                            SearchName = problem.NameSearchable
+                            SearchName = problem.NameSearchable,
                         };
 
                         Area? areaForSearch = areas.Where(a => a.Id == problem.AreaId).FirstOrDefault();

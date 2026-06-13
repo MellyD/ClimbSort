@@ -41,10 +41,10 @@
         }
         public enum eTag
         {
-            CragPopular = 1,
-            CragBeginnerFriendly = 2,
-            CragFamilyFriendly = 3,
-            CragDryFast = 4
+            Popular = 1,
+            BeginnerFriendly = 2,
+            FamilyFriendly = 3,
+            DryFast = 4
         }
     }
 }

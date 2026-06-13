@@ -18,8 +18,8 @@ namespace FontRecommender.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetCrags([FromQuery] CragFilter filter)
+        [HttpPost("/api/[controller]/GetAll")]
+        public async Task<IActionResult> GetCrags([FromBody] CragFilter filter)
         {
             try
             {

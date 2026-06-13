@@ -7,7 +7,9 @@ using FontRecommender.Core.ViewModels.Filters;
 using FontRecommender.Core.ViewModels.Generic;
 using FontRecommender.Data;
 using FontRecommender.Data.Repository;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Data.SqlClient;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace FontRecommender.Core.Services
@@ -60,16 +62,24 @@ namespace FontRecommender.Core.Services
                 foreach(AdvancedClimbFilterComponent component in filter.FilterComponents)
                 {
                     IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
-                        s => (string.IsNullOrEmpty(filter.Name) || s.Name.StartsWith(filter.Name)) &&
+                        s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name): s.Name.StartsWith(filter.Name))) &&
                         (component.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= component.MinGradeScaleOrder)) &&
                         (component.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= component.MaxGradeScaleOrder)) &&
                         (component.CragId == null || (s.Crag != null && s.Crag.Id == component.CragId)) &&
+                        (component.CircuitId == null || (s.Circuit != null && s.Circuit.Id == component.CircuitId)) &&
                         (component.MinRating == null || (s.Rating != null && s.Rating >= component.MinRating)) &&
                         (component.MaxRating == null || (s.Rating != null && s.Rating <= component.MaxRating)) &&
                         (component.MinPopularity == null || (s.Popularity != null && s.Popularity >= component.MinPopularity)) &&
                         (component.MaxPopularity == null || (s.Popularity != null && s.Popularity <= component.MaxPopularity)) &&
-                        (component.WallTypeId == null || s.WallType.Id == component.WallTypeId)
+                        (component.WallTypeId == null || s.WallType.Id == component.WallTypeId) &&
+                        (component.SitStart == null || s.SitStart == component.SitStart)
                         );
+                    climbs = climbs.Where(c =>
+                                        c.Tags
+                                            .Where(t => component.Tags == null || component.Tags.Contains(t.TagType))
+                                            .Select(t => t.TagType)
+                                            .Distinct()
+                                            .Count() == (component.Tags != null ? component.Tags.Count : 0));
 
                     IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
                     returnModels.AddRange(models);
@@ -88,15 +98,23 @@ namespace FontRecommender.Core.Services
             try
             {
                 IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
-                    s => (string.IsNullOrEmpty(filter.Name) || s.Name.StartsWith(filter.Name)) &&
+                    s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name) : s.Name.StartsWith(filter.Name))) &&
                     (filter.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= filter.MinGradeScaleOrder)) &&
                     (filter.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= filter.MaxGradeScaleOrder)) &&
                     (filter.CragId == null || (s.Crag != null && s.Crag.Id == filter.CragId)) &&
+                    (filter.CircuitId == null || (s.Circuit != null && s.Circuit.Id == filter.CircuitId)) &&
                     (filter.MinRating == null || (s.Rating != null && s.Rating >= filter.MinRating)) &&
                     (filter.MaxRating == null || (s.Rating != null && s.Rating <= filter.MaxRating)) &&
                     (filter.MinPopularity == null || (s.Popularity != null && s.Popularity >= filter.MinPopularity)) &&
-                    (filter.MaxPopularity == null || (s.Popularity != null && s.Popularity <= filter.MaxPopularity))
+                    (filter.MaxPopularity == null || (s.Popularity != null && s.Popularity <= filter.MaxPopularity)) &&
+                    (filter.SitStart == null || s.SitStart == filter.SitStart)
                     );
+                climbs = climbs.Where(c =>
+                                    c.Tags
+                                        .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                        .Select(t => t.TagType)
+                                        .Distinct()
+                                        .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
 
                 IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
 
@@ -259,7 +277,14 @@ namespace FontRecommender.Core.Services
             {
                 IQueryable<Crag> crags = _cragRepo.FindAllAsQueryable(c =>
                     (filter.Name == null || c.Name.StartsWith(filter.Name)) &&
-                    (filter.CountryCode == null || c.CountryCode == filter.CountryCode));
+                    (filter.CountryCode == null || c.CountryCode == filter.CountryCode)
+                    );
+                crags = crags.Where(c =>
+                                    c.Tags
+                                        .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                        .Select(t => t.TagType)
+                                        .Distinct()
+                                        .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
                 IEnumerable<CragSimpleModel> models = _mapper.Map<IEnumerable<Crag>, IEnumerable<CragSimpleModel>>(crags.ToList());
                 return models;
             }
@@ -387,6 +412,12 @@ namespace FontRecommender.Core.Services
                 _logger.Error("Failed to delete crag, failed in service method. Ex: {ex}", ex.Message);
                 throw;
             }
+        }
+        private static bool ContainsAll<T>(IEnumerable<T> source, IEnumerable<T> required)
+        {
+            var set = source.ToHashSet();
+
+            return required.All(set.Contains);
         }
     }
 }
