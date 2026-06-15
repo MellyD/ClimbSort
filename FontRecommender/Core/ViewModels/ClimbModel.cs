@@ -25,6 +25,7 @@ namespace FontRecommender.Core.ViewModels
         public required string Name { get; set; }
         public string? SearchName { get; set; }
         public int? Popularity { get; set; }
+        public bool? Dangeroud { get; set; }
         public string? GradeLabel { get; set; }
         public int? GradeScaleOrder { get; set; }
         public string? CragName { get; set; }

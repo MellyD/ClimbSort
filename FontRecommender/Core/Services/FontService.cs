@@ -47,44 +47,15 @@ namespace FontRecommender.Core.Services
             _logger = logger;
         }
 
-        public async Task<List<ClimbSimpleModel>> AdvancedGetClimbs(AdvancedClimbFilter filter)
+        #region Climb Methods
+        public async Task<IEnumerable<ClimbSimpleModel>> GetClimbs(AdvancedClimbFilter filter)
         {
             try
             {
-                List<ClimbSimpleModel> returnModels = [];
+                IQueryable<Climb> climbs = await GetAdvancedClimbsAsQueryable(filter);
+                IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
 
-                if (filter.FilterComponents == null || filter.FilterComponents.Count == 0)
-                {
-                    IEnumerable<ClimbSimpleModel> models = await GetClimbs(_mapper.Map<AdvancedClimbFilter, ClimbFilter>(filter));
-                    return models.ToList();
-                }
-
-                foreach(AdvancedClimbFilterComponent component in filter.FilterComponents)
-                {
-                    IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
-                        s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name): s.Name.StartsWith(filter.Name))) &&
-                        (component.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= component.MinGradeScaleOrder)) &&
-                        (component.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= component.MaxGradeScaleOrder)) &&
-                        (component.CragId == null || (s.Crag != null && s.Crag.Id == component.CragId)) &&
-                        (component.CircuitId == null || (s.Circuit != null && s.Circuit.Id == component.CircuitId)) &&
-                        (component.MinRating == null || (s.Rating != null && s.Rating >= component.MinRating)) &&
-                        (component.MaxRating == null || (s.Rating != null && s.Rating <= component.MaxRating)) &&
-                        (component.MinPopularity == null || (s.Popularity != null && s.Popularity >= component.MinPopularity)) &&
-                        (component.MaxPopularity == null || (s.Popularity != null && s.Popularity <= component.MaxPopularity)) &&
-                        (component.WallTypeId == null || s.WallType.Id == component.WallTypeId) &&
-                        (component.SitStart == null || s.SitStart == component.SitStart)
-                        );
-                    climbs = climbs.Where(c =>
-                                        c.Tags
-                                            .Where(t => component.Tags == null || component.Tags.Contains(t.TagType))
-                                            .Select(t => t.TagType)
-                                            .Distinct()
-                                            .Count() == (component.Tags != null ? component.Tags.Count : 0));
-
-                    IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
-                    returnModels.AddRange(models);
-                }
-                return returnModels;
+                return models;
             }
             catch (Exception ex)
             {
@@ -97,30 +68,72 @@ namespace FontRecommender.Core.Services
         {
             try
             {
-                IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
-                    s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name) : s.Name.StartsWith(filter.Name))) &&
-                    (filter.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= filter.MinGradeScaleOrder)) &&
-                    (filter.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= filter.MaxGradeScaleOrder)) &&
-                    (filter.CragId == null || (s.Crag != null && s.Crag.Id == filter.CragId)) &&
-                    (filter.CircuitId == null || (s.Circuit != null && s.Circuit.Id == filter.CircuitId)) &&
-                    (filter.MinRating == null || (s.Rating != null && s.Rating >= filter.MinRating)) &&
-                    (filter.MaxRating == null || (s.Rating != null && s.Rating <= filter.MaxRating)) &&
-                    (filter.MinPopularity == null || (s.Popularity != null && s.Popularity >= filter.MinPopularity)) &&
-                    (filter.MaxPopularity == null || (s.Popularity != null && s.Popularity <= filter.MaxPopularity)) &&
-                    (filter.SitStart == null || s.SitStart == filter.SitStart)
-                    );
-                climbs = climbs.Where(c =>
-                                    c.Tags
-                                        .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
-                                        .Select(t => t.TagType)
-                                        .Distinct()
-                                        .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
-
+                IQueryable<Climb> climbs = await GetClimbsAsQueryable(filter);
                 IEnumerable<ClimbSimpleModel> models = _mapper.Map<IEnumerable<Climb>, IEnumerable<ClimbSimpleModel>>(climbs.ToList());
 
                 models = models.Where(m => filter.WallTypeIds != null && filter.WallTypeIds.Count != 0 && filter.WallTypeIds.Contains(m.WallTypeId));
 
                 return models;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get climbs, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<KeysetPaginateView<TView>> GetAllClimbsKeysetPaginated<TView>(KeysetClimbFilter filters) where TView : class
+        {
+            try
+            {
+                IQueryable<Climb> climbs = await GetClimbsAsQueryable(filters);
+                KeysetPaginateView<TView> paginatedResultSet = await KeysetPaginateGetTask<TView>(filters.PageSize, filters.LastItem, climbs);
+                return paginatedResultSet;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get climbs, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<OffsetPaginateView<TView>> GetClimbsOffsetPaginated<TView>(OffsetClimbFilter filters) where TView : class
+        {
+            try
+            {
+                IQueryable<Climb> climbs = await GetClimbsAsQueryable(filters);
+                OffsetPaginateView<TView> offsetView = await OffsetPaginateGetTask<TView>(filters.PageNumber, filters.PageSize, climbs);
+                return offsetView;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get climbs, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<KeysetPaginateView<TView>> GetAllClimbsKeysetPaginated<TView>(KeysetAdvancedClimbFilter filters) where TView : class
+        {
+            try
+            {
+                IQueryable<Climb> climbs = await GetAdvancedClimbsAsQueryable(filters);
+                KeysetPaginateView<TView> paginatedResultSet = await KeysetPaginateGetTask<TView>(filters.PageSize, filters.LastItem, climbs);
+                return paginatedResultSet;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get climbs, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<OffsetPaginateView<TView>> GetClimbsOffsetPaginated<TView>(OffsetAdvancedClimbFilter filters) where TView : class
+        {
+            try
+            {
+                IQueryable<Climb> climbs = await GetAdvancedClimbsAsQueryable(filters);
+                OffsetPaginateView<TView> offsetView = await OffsetPaginateGetTask<TView>(filters.PageNumber, filters.PageSize, climbs);
+                return offsetView;
             }
             catch (Exception ex)
             {
@@ -270,7 +283,106 @@ namespace FontRecommender.Core.Services
                 throw;
             }
         }
+        private async Task<KeysetPaginateView<TView>> KeysetPaginateGetTask<TView>(int pageSize, Guid? lastItem, IQueryable<Climb> climbs) where TView : class
+        {
+            DateTime? lastItemModifiedAt = null;
+            KeysetPaginateInsert paginateInsert = new() { PageSize = pageSize, LastItem = lastItem };
+            if (paginateInsert.LastItem.HasValue)
+            {
+                Climb lastClimb = await _climbRepo.GetByIdAsync(paginateInsert.LastItem.Value);
+                lastItemModifiedAt = lastClimb.ModifiedDate;
+            }
+            KeysetPaginateView<TView> paginatedResultSet = await _climbRepo.GetKeysetPaginatedResultSet<DateTime, TView>(
+                climbs,
+                s => s.ModifiedDate < lastItemModifiedAt,
+                s => s.ModifiedDate,
+                s => s.Id,
+                paginateInsert);
+            return paginatedResultSet;
+        }
 
+        private async Task<OffsetPaginateView<TView>> OffsetPaginateGetTask<TView>(int pageNumber, int pageSize, IQueryable<Climb> climbs) where TView : class
+        {
+            OffsetPaginateInsert paginateInsert = new() { PageNumber = pageNumber, PageSize = pageSize };
+            OffsetPaginateView<TView> paginateResultset = await _climbRepo.GetOffsetPaginatedResultSet<DateTime, TView>(climbs, s => s.ModifiedDate, paginateInsert);
+
+            return paginateResultset;
+        }
+
+        private async Task<IQueryable<Climb>> GetClimbsAsQueryable(ClimbFilter filter)
+        {
+            IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
+                s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name) : s.Name.StartsWith(filter.Name))) &&
+                (filter.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= filter.MinGradeScaleOrder)) &&
+                (filter.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= filter.MaxGradeScaleOrder)) &&
+                (filter.CragId == null || (s.Crag != null && s.Crag.Id == filter.CragId)) &&
+                (filter.CircuitId == null || (s.Circuit != null && s.Circuit.Id == filter.CircuitId)) &&
+                (filter.MinRating == null || (s.Rating != null && s.Rating >= filter.MinRating)) &&
+                (filter.MaxRating == null || (s.Rating != null && s.Rating <= filter.MaxRating)) &&
+                (filter.MinPopularity == null || (s.Popularity != null && s.Popularity >= filter.MinPopularity)) &&
+                (filter.MaxPopularity == null || (s.Popularity != null && s.Popularity <= filter.MaxPopularity)) &&
+                (filter.SitStart == null || s.SitStart == filter.SitStart) &&
+                (filter.Dangerous == null || s.Dangerous == filter.Dangerous)
+                );
+            climbs = climbs.Where(c =>
+                                c.Tags
+                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                    .Select(t => t.TagType)
+                                    .Distinct()
+                                    .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
+
+            return climbs;
+        }
+
+        private async Task<IQueryable<Climb>> GetAdvancedClimbsAsQueryable(AdvancedClimbFilter filter)
+        {
+            IQueryable<Climb>? combinedQuery = null;
+
+            if (filter.FilterComponents == null || filter.FilterComponents.Count == 0)
+            {
+                IQueryable<Climb> climbs = await GetClimbsAsQueryable(_mapper.Map<AdvancedClimbFilter, ClimbFilter>(filter));
+                return climbs;
+            }
+
+            foreach (var component in filter.FilterComponents)
+            {
+                IQueryable<Climb> climbs = _climbRepo.FindAllAsQueryable(
+                    s => (string.IsNullOrEmpty(filter.Name) || (s.SearchName != null ? s.SearchName.StartsWith(filter.Name) : s.Name.StartsWith(filter.Name))) &&
+                    (component.MinGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder >= component.MinGradeScaleOrder)) &&
+                    (component.MaxGradeScaleOrder == null || (s.Grade != null && s.Grade.ScaleOrder <= component.MaxGradeScaleOrder)) &&
+                    (component.CragId == null || (s.Crag != null && s.Crag.Id == component.CragId)) &&
+                    (component.CircuitId == null || (s.Circuit != null && s.Circuit.Id == component.CircuitId)) &&
+                    (component.MinRating == null || (s.Rating != null && s.Rating >= component.MinRating)) &&
+                    (component.MaxRating == null || (s.Rating != null && s.Rating <= component.MaxRating)) &&
+                    (component.MinPopularity == null || (s.Popularity != null && s.Popularity >= component.MinPopularity)) &&
+                    (component.MaxPopularity == null || (s.Popularity != null && s.Popularity <= component.MaxPopularity)) &&
+                    (component.WallTypeId == null || s.WallType.Id == component.WallTypeId) &&
+                    (component.SitStart == null || s.SitStart == component.SitStart) &&
+                    (component.Dangerous == null || s.Dangerous == component.Dangerous)
+                    );
+
+                if (component.Tags?.Any() == true)
+                {
+                    foreach (var tag in component.Tags)
+                    {
+                        climbs = climbs.Where(c =>
+                            c.Tags.Any(t => t.TagType == tag));
+                    }
+                }
+
+                combinedQuery = combinedQuery == null
+                    ? climbs
+                    : combinedQuery.Union(climbs);
+            }
+
+            if (combinedQuery != null)
+                return combinedQuery;
+            else
+                throw new KeyNotFoundException("Failed to fetch any climbs that match the filter");
+        }
+        #endregion
+
+        #region Crag Methods
         public async Task<IEnumerable<CragSimpleModel>> GetCrags(CragFilter filter)
         {
             try
@@ -413,11 +525,56 @@ namespace FontRecommender.Core.Services
                 throw;
             }
         }
-        private static bool ContainsAll<T>(IEnumerable<T> source, IEnumerable<T> required)
-        {
-            var set = source.ToHashSet();
+        #endregion
 
-            return required.All(set.Contains);
+        #region Static Variable Methods
+        public IEnumerable<GradingSystemModel> GetGradingSystems()
+        {
+            try
+            {
+                IEnumerable<GradingSystem> gradingSystems = _gradingSystemRepo.GetAll() ?? throw new KeyNotFoundException("Failed to fetch grading systems.");
+                IEnumerable<GradingSystemModel> models = _mapper.Map<IEnumerable<GradingSystem>, IEnumerable<GradingSystemModel>>(gradingSystems);
+
+                return models;
+            }
+            catch(Exception ex)
+            {
+                _logger.Error("Failed to get grading sytems, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
         }
+
+        public async Task<IEnumerable<GradeModel>> GetGradesForSystem(int gradingSystemId)
+        {
+            try
+            {
+                IEnumerable<Grade> grades = await _gradeRepo.FindAllAsync(g => g.GradingSystem.Id == gradingSystemId) ?? throw new KeyNotFoundException($"Failed to fetch grades for grading system by GradingSystemId: {gradingSystemId}");
+                IEnumerable<GradeModel> models = _mapper.Map<IEnumerable<Grade>, IEnumerable<GradeModel>>(grades);
+
+                return models;
+            }
+            catch(Exception ex)
+            {
+                _logger.Error("Failed to get grades for grading system, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        public IEnumerable<WallTypeModel> GetWallTypes()
+        {
+            try
+            {
+                IEnumerable<WallType> wallTypes = _wallTypeRepo.GetAll() ?? throw new KeyNotFoundException("Failed to fetch wall types.");
+                IEnumerable<WallTypeModel> models = _mapper.Map<IEnumerable<WallType>, IEnumerable<WallTypeModel>>(wallTypes);
+
+                return models;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get wall types, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+        #endregion
     }
 }

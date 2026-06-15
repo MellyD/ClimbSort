@@ -2,19 +2,9 @@
 
 namespace FontRecommender.Core.ViewModels.Filters
 {
-    public class ClimbFilter
+    public class ClimbFilter: BasicClimbFilterComponents
     {
-        public string? Name { get; set; } = default;
-        public int? MinGradeScaleOrder { get; set; }
-        public int? MaxGradeScaleOrder { get; set; }
-        public Guid? CragId { get; set; } = default;
-        public Guid? CircuitId { get; set; } = default;
         public List<int>? WallTypeIds { get; set; } = [];
-        public decimal? MinRating { get; set; }
-        public decimal? MaxRating { get; set; }
-        public int? MinPopularity { get; set; }
-        public int? MaxPopularity { get; set; }
-        public bool? SitStart { get; set; }
         public List<eTag>? Tags { get; set; } = [];
     }
 
@@ -24,18 +14,48 @@ namespace FontRecommender.Core.ViewModels.Filters
         public List<AdvancedClimbFilterComponent>? FilterComponents { get; set; }
     }
 
-    public class AdvancedClimbFilterComponent
+    public class OffsetClimbFilter: ClimbFilter
+    {
+        public required int PageNumber { get; set; }
+        public required int PageSize { get; set; }
+    }
+
+    public class OffsetAdvancedClimbFilter : AdvancedClimbFilter
+    {
+        public required int PageNumber { get; set; }
+        public required int PageSize { get; set; }
+    }
+
+    public class KeysetClimbFilter: ClimbFilter
+    {
+        public required int PageSize { get; set; }
+        public Guid? LastItem { get; set; }
+    }
+
+    public class KeysetAdvancedClimbFilter : AdvancedClimbFilter
+    {
+        public required int PageSize { get; set; }
+        public Guid? LastItem { get; set; }
+    }
+
+    public class AdvancedClimbFilterComponent: BasicClimbFilterComponents
     {
         public int? WallTypeId { get; set; }
-        public Guid? CragId { get; set; }
-        public Guid? CircuitId { get; set; } = default;
+        public List<eTag>? Tags { get; set; } = [];
+    }
+
+    public class BasicClimbFilterComponents
+    {
+        public string? Name { get; set; } = default;
         public int? MinGradeScaleOrder { get; set; }
         public int? MaxGradeScaleOrder { get; set; }
+        public Guid? CragId { get; set; } = default;
+        public Guid? CircuitId { get; set; } = default;
         public decimal? MinRating { get; set; }
         public decimal? MaxRating { get; set; }
         public int? MinPopularity { get; set; }
         public int? MaxPopularity { get; set; }
         public bool? SitStart { get; set; }
-        public List<eTag>? Tags { get; set; } = [];
+        public bool? Dangerous { get; set; }
     }
 }

@@ -100,28 +100,28 @@ namespace BoolderDataMigration.Core.Service
                                     case "popular":
                                         Tag tag = new()
                                         {
-                                            TagType = eTag.CragPopular
+                                            TagType = eTag.Popular
                                         };
                                         crag.Tags.Add(tag);
                                         break;
                                     case "beginner_friendly":
                                         Tag beginnerTag = new()
                                         {
-                                            TagType = eTag.CragBeginnerFriendly
+                                            TagType = eTag.BeginnerFriendly
                                         };
                                         crag.Tags.Add(beginnerTag);
                                         break;
                                     case "family_friendly":
                                         Tag familyTag = new()
                                         {
-                                            TagType = eTag.CragFamilyFriendly
+                                            TagType = eTag.FamilyFriendly
                                         };
                                         crag.Tags.Add(familyTag);
                                         break;
                                     case "dry_fast":
                                         Tag dryTag = new()
                                         {
-                                            TagType = eTag.CragDryFast
+                                            TagType = eTag.DryFast
                                         };
                                         crag.Tags.Add(dryTag);
                                         break;

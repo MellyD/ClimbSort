@@ -58,6 +58,21 @@ namespace FontRecommender.Automapper
             CreateMap<Tag, TagModel>()
                 .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => Enum.GetName(src.TagType)))
                 .ForMember(dest => dest.TagId, opt => opt.MapFrom(src => (int)src.TagType));
+
+            CreateMap<GradingSystem, GradingSystemModel>()
+                .ForMember(dest => dest.GradingSystemName, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.GradingSystemId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.DisciplineId, opt => opt.MapFrom(src => (int)src.Discipline))
+                .ForMember(dest => dest.DisciplineName, opt => opt.MapFrom(src => Enum.GetName(src.Discipline)));
+
+            CreateMap<Grade, GradeModel>()
+                .ForMember(dest => dest.GradeId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.GradingSystemName, opt => opt.MapFrom(src => src.GradingSystem.Name))
+                .ForMember(dest => dest.GradingSystemId, opt => opt.MapFrom(src => src.GradingSystem.Id));
+
+            CreateMap<WallType, WallTypeModel>()
+                .ForMember(dest => dest.WallTypeId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.WallTypeDescription, opt => opt.MapFrom(src => src.Description));
         }
     }
 }

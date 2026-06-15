@@ -1,6 +1,7 @@
 ﻿using FontRecommender.Core.Interfaces;
 using FontRecommender.Core.ViewModels;
 using FontRecommender.Core.ViewModels.Filters;
+using FontRecommender.Core.ViewModels.Generic;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FontRecommender.Controllers
@@ -36,7 +37,63 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                List<ClimbSimpleModel> climbs = await _fontService.AdvancedGetClimbs(filter);
+                IEnumerable<ClimbSimpleModel> climbs = await _fontService.GetClimbs(filter);
+                return Ok(climbs);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting climbs.");
+                return Problem();
+            }
+        }
+        [HttpGet("/api/[controller]/Offset")]
+        public async Task<IActionResult> GetClimbsOffsetPaginated([FromQuery] OffsetClimbFilter filter)
+        {
+            try
+            {
+                OffsetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
+                return Ok(climbs);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting climbs.");
+                return Problem();
+            }
+        }
+        [HttpGet("/api/[controller]/Keyset")]
+        public async Task<IActionResult> GetClimbsKeysetPaginated([FromQuery] KeysetClimbFilter filter)
+        {
+            try
+            {
+                KeysetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
+                return Ok(climbs);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting climbs.");
+                return Problem();
+            }
+        }
+        [HttpPost("/api/[controller]/Offset/AdvancedFilter")]
+        public async Task<IActionResult> GetAdvancedClimbsOffsetPaginated([FromBody] OffsetAdvancedClimbFilter filter)
+        {
+            try
+            {
+                OffsetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
+                return Ok(climbs);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting climbs.");
+                return Problem();
+            }
+        }
+        [HttpPost("/api/[controller]/Keyset/AdvancedFilter")]
+        public async Task<IActionResult> GetAdvancedClimbsKeysetPaginated([FromBody] KeysetAdvancedClimbFilter filter)
+        {
+            try
+            {
+                KeysetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
                 return Ok(climbs);
             }
             catch (Exception ex)

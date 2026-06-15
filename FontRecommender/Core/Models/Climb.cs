@@ -13,6 +13,7 @@ namespace FontRecommender.Core.Models
         public virtual Circuit? Circuit { get; set; }
         public int? CircuitNumber { get; set; }
         public bool? SitStart { get; set; } = false;
+        public bool? Dangerous { get; set; } = false;
         public decimal? Rating { get; set; }
         public string? Description { get; set; }
         public string? Link { get; set; }
