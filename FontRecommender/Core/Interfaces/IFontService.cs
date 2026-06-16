@@ -17,6 +17,7 @@ namespace FontRecommender.Core.Interfaces
         Task<Guid> UpdateClimb(ClimbModel model);
         Task<bool> DeleteClimb(Guid climbId);
         Task<IEnumerable<CragSimpleModel>> GetCrags(CragFilter filter);
+        Task<KeysetPaginateView<TView>> GetCragsKeysetPaginated<TView>(KeysetCragFilter filter) where TView : class;
         Task<CragModel> GetCrag(Guid cragId);
         Task<Guid> CreateCrag(CragModel model);
         Task<Guid> UpdateCrag(CragModel model);

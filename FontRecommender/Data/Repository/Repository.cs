@@ -148,7 +148,9 @@ namespace FontRecommender.Data.Repository
                 List<TView> mappedResultSet = [];
                 if (typeof(TEntity) != typeof(TView))
                 {
-                    mappedResultSet = await paginatedResultSet.ProjectTo<TView>(_mapper.ConfigurationProvider).ToListAsync();
+                    var entities = await paginatedResultSet.ToListAsync();
+
+                    mappedResultSet = _mapper.Map<List<TView>>(entities);
                 }
                 else
                 {
@@ -181,7 +183,9 @@ namespace FontRecommender.Data.Repository
                 List<TView> mappedResultSet = [];
                 if (typeof(TEntity) != typeof(TView))
                 {
-                    mappedResultSet = await paginatedResultSet.ProjectTo<TView>(_mapper.ConfigurationProvider).ToListAsync();
+                    var entities = await paginatedResultSet.ToListAsync();
+
+                    mappedResultSet = _mapper.Map<List<TView>>(entities);
                 }
                 else
                 {
@@ -190,7 +194,7 @@ namespace FontRecommender.Data.Repository
                 KeysetPaginateView<TView> paginateResult = new KeysetPaginateView<TView>
                 {
                     HasMore = mappedResultSet.Count == keysetPaginateInsert.PageSize,
-                    LastItem = mappedResultSet.Count > 0 ? idSortingPredicate.Compile().Invoke(resultSet.Last()) : null,
+                    LastItem = mappedResultSet.Count > 0 ? idSortingPredicate.Compile().Invoke(resultSet.OrderByDescending(sortingPredicate).ThenByDescending(idSortingPredicate).Last()) : null,
                     ResultSet = mappedResultSet
                 };
                 return paginateResult;

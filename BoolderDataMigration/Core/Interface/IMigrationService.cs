@@ -9,5 +9,6 @@ namespace BoolderDataMigration.Core.Interface
     {
         Task<bool> MigrateData(string filePath, eDataType eDataType);
         Task<bool> MigrateAllData();
+        Task<bool> ImportLinks(string filePath);
     }
 }

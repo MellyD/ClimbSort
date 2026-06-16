@@ -1,6 +1,7 @@
 using FontRecommender.Core.Interfaces;
 using FontRecommender.Core.ViewModels;
 using FontRecommender.Core.ViewModels.Filters;
+using FontRecommender.Core.ViewModels.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 
@@ -24,6 +25,21 @@ namespace FontRecommender.Controllers
             try
             {
                 IEnumerable<CragSimpleModel> crags = await _fontService.GetCrags(filter);
+                return Ok(crags);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while getting crags.");
+                return Problem();
+            }
+        }
+
+        [HttpPost("api/[controller]/Keyset")]
+        public async Task<IActionResult> GetCragsKeysetPaginated([FromBody] KeysetCragFilter filter)
+        {
+            try
+            {
+                KeysetPaginateView<CragSimpleModel> crags = await _fontService.GetCragsKeysetPaginated<CragSimpleModel>(filter);
                 return Ok(crags);
             }
             catch (Exception ex)

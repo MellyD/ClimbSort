@@ -71,10 +71,14 @@ host.Run();
 
 static async Task RunProgram(IServiceProvider services)
 {
+
+    string bleauHtmlPath = Path.Combine(
+        AppContext.BaseDirectory,
+        "bleauAreas.html");
     using var scope = services.CreateScope();
     var provider = scope.ServiceProvider;
     var service = provider.GetService<IMigrationService>();
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-    bool migrationSucceeded = await service?.MigrateAllData();
+    bool migrationSucceeded = await service?.ImportLinks(bleauHtmlPath);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 }

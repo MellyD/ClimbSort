@@ -301,6 +301,24 @@ namespace FontRecommender.Core.Services
             return paginatedResultSet;
         }
 
+        private async Task<KeysetPaginateView<TView>> KeysetPaginateGetTask<TView>(int pageSize, Guid? lastItem, IQueryable<Crag> crags) where TView : class
+        {
+            DateTime? lastItemModifiedAt = null;
+            KeysetPaginateInsert paginateInsert = new() { PageSize = pageSize, LastItem = lastItem };
+            if (paginateInsert.LastItem.HasValue)
+            {
+                Crag lastClimb = await _cragRepo.GetByIdAsync(paginateInsert.LastItem.Value);
+                lastItemModifiedAt = lastClimb.ModifiedDate;
+            }
+            KeysetPaginateView<TView> paginatedResultSet = await _cragRepo.GetKeysetPaginatedResultSet<DateTime, TView>(
+                crags,
+                s => s.ModifiedDate < lastItemModifiedAt,
+                s => s.ModifiedDate,
+                s => s.Id,
+                paginateInsert);
+            return paginatedResultSet;
+        }
+
         private async Task<OffsetPaginateView<TView>> OffsetPaginateGetTask<TView>(int pageNumber, int pageSize, IQueryable<Climb> climbs) where TView : class
         {
             OffsetPaginateInsert paginateInsert = new() { PageNumber = pageNumber, PageSize = pageSize };
@@ -405,6 +423,37 @@ namespace FontRecommender.Core.Services
                 _logger.Error("Failed to get crags, failed in service method. Ex: {ex}", ex.Message);
                 throw;
             }
+        }
+
+        public async Task<KeysetPaginateView<TView>> GetCragsKeysetPaginated<TView>(KeysetCragFilter filter) where TView : class
+        {
+            try
+            {
+                IQueryable<Crag> crags = GetCragsAsQueryable(filter);
+                KeysetPaginateView<TView> paginatedResultSet = await KeysetPaginateGetTask<TView>(filter.PageSize, filter.LastItem, crags);
+                return paginatedResultSet;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get crags, failed in service method. Ex: {ex}", ex.Message);
+                throw;
+            }
+        }
+
+        private IQueryable<Crag> GetCragsAsQueryable(KeysetCragFilter filter)
+        {
+            IQueryable<Crag> crags = _cragRepo.FindAllAsQueryable(c =>
+                (filter.Name == null || c.Name.StartsWith(filter.Name)) &&
+                (filter.CountryCode == null || c.CountryCode == filter.CountryCode)
+                );
+            crags = crags.Where(c =>
+                                c.Tags
+                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                    .Select(t => t.TagType)
+                                    .Distinct()
+                                    .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
+
+            return crags;
         }
 
         public async Task<CragModel> GetCrag(Guid cragId)

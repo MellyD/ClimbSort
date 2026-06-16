@@ -7,11 +7,13 @@ using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
 using FontRecommender.Data;
 using FontRecommender.Data.Repository;
+using HtmlAgilityPack;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using static BoolderDataMigration.Enums;
 using static FontRecommender.Core.Enums;
 
@@ -237,7 +239,7 @@ namespace BoolderDataMigration.Core.Service
                             Id = Guid.NewGuid(),
                             WallType = walltype,
                             SitStart = problem.SitStart == 1,
-                            SearchName = problem.NameSearchable,
+                            SearchName = problem.NameSearchable
                         };
 
                         Area? areaForSearch = areas.Where(a => a.Id == problem.AreaId).FirstOrDefault();
@@ -323,6 +325,87 @@ namespace BoolderDataMigration.Core.Service
                 Console.WriteLine(ex.Message);
                 throw;
             }
+        }
+
+        public async Task<bool> ImportLinks(string filePath)
+        {
+            int passed = 0;
+            int failed = 0;
+            try
+            {
+                string contents = "";
+
+                using (StreamReader reader = new(filePath))
+                {
+                    contents = reader.ReadToEnd();
+                }
+
+                var doc = new HtmlDocument();
+                doc.LoadHtml(contents);
+
+                var links = doc.DocumentNode.SelectNodes("//a");
+
+                var dict = links.Where(a =>
+                                {
+                                    var href = a.Attributes["href"]?.Value;
+                                    var text = a.InnerText?.Trim();
+
+                                    return href != null
+                                        && text != null
+                                        && href.StartsWith("/")
+                                        && !string.IsNullOrWhiteSpace(text)
+                                        && !href.Contains("toggle_favarea");
+                                })
+                                .GroupBy(a => a.InnerText.Trim())
+                                .ToDictionary(
+                                    g => g.Key,
+                                    g => g.First().Attributes["href"].Value.TrimStart('/'));
+                if (dict == null || !dict.Any())
+                    throw new KeyNotFoundException("Failed to find crag extensions.");
+
+                List<Problem> problems = _boolderProblemRepo.GetAll().ToList();
+                foreach (var problem in problems)
+                {
+                    try
+                    {
+                        Climb? climb = await _climbRepo.FindAsync(c => c.Name == problem.Name);
+                        if (climb == null)
+                        {
+                            failed++;
+                            continue;
+                        }
+
+                        string? cragName = climb.Crag?.Name;
+                        if (string.IsNullOrEmpty(cragName))
+                        {
+                            failed++;
+                            continue;
+                        }
+
+                        dict.TryGetValue(cragName, out string? cragExtension);
+                        if (string.IsNullOrEmpty(cragExtension))
+                        {
+                            failed++;
+                            continue;
+                        }
+
+                        climb.Link = $"https://bleau.info/{cragExtension}/{problem.BleauInfoId}.html";
+                        await _climbRepo.UpdateAsync(climb);
+                        passed++;
+                    }
+                    catch
+                    {
+                        failed++;
+                        continue;
+                    }
+                    Console.Write($"\rPassed: {passed} | Failed: {failed}");
+                }
+                return true;
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Import links failed: {ex.Message}");
+                throw;
+            } 
         }
 
         public async Task<bool> MigrateData(string filePath, eDataType eDataType)
