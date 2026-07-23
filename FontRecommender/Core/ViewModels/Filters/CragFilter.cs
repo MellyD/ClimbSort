@@ -6,7 +6,7 @@ namespace FontRecommender.Core.ViewModels.Filters
     {
         public string? Name { get; set; }
         public string? CountryCode { get; set; }
-        public List<eTag>? Tags { get; set; } = [];
+        public List<int>? Tags { get; set; } = [];
     }
 
     public class OffsetCragFilter : CragFilter

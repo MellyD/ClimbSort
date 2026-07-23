@@ -47,7 +47,7 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"]);
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif

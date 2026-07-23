@@ -5,9 +5,11 @@ using BoolderDataMigration.Core.ViewModels;
 using BoolderDataMigration.Models;
 using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
+using FontRecommender.Core.Models.Static;
 using FontRecommender.Data;
 using FontRecommender.Data.Repository;
 using HtmlAgilityPack;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -16,6 +18,7 @@ using System.Text.Json;
 using System.Xml;
 using static BoolderDataMigration.Enums;
 using static FontRecommender.Core.Enums;
+using static System.Net.WebRequestMethods;
 
 namespace BoolderDataMigration.Core.Service
 {
@@ -25,10 +28,11 @@ namespace BoolderDataMigration.Core.Service
         private readonly IRepository<FontRecommendationDBContext, Climb> _climbRepo;
         private readonly IRepository<FontRecommendationDBContext, Crag> _cragRepo;
         private readonly IRepository<FontRecommendationDBContext, Grade> _gradeRepo;
-        private readonly IRepository<FontRecommendationDBContext, GradingSystem> _gradingSystemRepo;
         private readonly IRepository<FontRecommendationDBContext, Topography> _topographyRepo;
         private readonly IRepository<FontRecommendationDBContext, WallType> _wallTypeRepo;
         private readonly IRepository<FontRecommendationDBContext, Coordinates> _coordinatesRepo;
+        private readonly IRepository<FontRecommendationDBContext, Tag> _tagRepo;
+        private readonly IRepository<FontRecommendationDBContext, TagType> _tagTypeRepo;
         private readonly IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> _circuitRepo;
         private readonly IRepository<BoolderContext, Area> _boolderAreaRepo;
         private readonly IRepository<BoolderContext, Problem> _boolderProblemRepo;
@@ -41,10 +45,11 @@ namespace BoolderDataMigration.Core.Service
             IRepository<FontRecommendationDBContext, Climb> climbRepo,
             IRepository<FontRecommendationDBContext, Crag> cragRepo,
             IRepository<FontRecommendationDBContext, Grade> gradeRepo,
-            IRepository<FontRecommendationDBContext, GradingSystem> gradingSystemRepo,
             IRepository<FontRecommendationDBContext, Topography> topographyRepo,
             IRepository<FontRecommendationDBContext, WallType> wallTypeRepo,
             IRepository<FontRecommendationDBContext, Coordinates> coordinatesRepo,
+            IRepository<FontRecommendationDBContext, Tag> tagRepo,
+            IRepository<FontRecommendationDBContext, TagType> tagTypeRepo,
             IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> circuitRepo,
             IRepository<BoolderContext, Area> boolderAreaRepo,
             IRepository<BoolderContext, Problem> boolderProblemRepo,
@@ -57,10 +62,11 @@ namespace BoolderDataMigration.Core.Service
             _climbRepo = climbRepo;
             _cragRepo = cragRepo;
             _gradeRepo = gradeRepo;
-            _gradingSystemRepo = gradingSystemRepo;
             _topographyRepo = topographyRepo;
             _wallTypeRepo = wallTypeRepo;
             _coordinatesRepo = coordinatesRepo;
+            _tagRepo = tagRepo;
+            _tagTypeRepo = tagTypeRepo;
             _circuitRepo = circuitRepo;
             _boolderAreaRepo = boolderAreaRepo;
             _boolderProblemRepo = boolderProblemRepo;
@@ -70,6 +76,277 @@ namespace BoolderDataMigration.Core.Service
             _mapper = mapper;
         }
         #endregion
+
+        //public async Task<bool> ScrapeWebsite() 
+        //{
+        //    try
+        //    {
+        //        int passed = 0;
+        //        int failed = 0;
+        //        List<Climb> climbs = _climbRepo.GetAll().ToList();
+        //        foreach( Climb climb in climbs)
+        //        {
+        //            if (!string.IsNullOrEmpty(climb.Link))
+        //            {
+        //                try
+        //                {
+        //                    var web = new HtmlWeb();
+        //                    var doc = await web.LoadFromWebAsync($"{climb.Link}?locale=en");
+        //                    var descriptionNode = doc.DocumentNode.SelectSingleNode("//div[@class='btype']");
+        //                    if (descriptionNode != null)
+        //                    {
+        //                        List<string> tags = descriptionNode.InnerText.Trim().Split(",").Select(t => t.Trim().Replace("\\n","")).ToList();
+        //                        foreach(string tag in tags)
+        //                        {
+        //                            if (!string.IsNullOrEmpty(tag))
+        //                            {
+        //                                TagType? tagType = await _tagTypeRepo.FindAsync(t => t.Description.ToLower() == tag.ToLower());
+        //                                if(tagType == null)
+        //                                {
+        //                                    tagType = new()
+        //                                    {
+        //                                        Description = tag
+        //                                    };
+        //                                    await _tagTypeRepo.CreateAsync(tagType);
+        //                                }
+        //                                Tag? existing = await _tagRepo.FindAsync(t => t.TagType == tagType && t.Climb == climb);
+        //                                if (existing != null)
+        //                                    continue;
+        //                                Tag newTag = new()
+        //                                {
+        //                                    TagType = tagType,
+        //                                    Climb = climb
+        //                                };
+        //                                climb.Tags.Add(newTag);
+        //                            }
+        //                        }
+        //                        await _climbRepo.UpdateAsync(climb);
+        //                        passed++;
+        //                    }
+
+        //                    Console.Write($"\rPassed: {passed} | Failed: {failed}");
+        //                }
+        //                catch
+        //                {
+        //                    failed++;
+
+        //                    Console.Write($"\rPassed: {passed} | Failed: {failed}");
+        //                    continue;
+        //                }
+        //            }
+
+        //        }
+        //        return true;
+        //    }
+        //    catch( Exception ex )
+        //    {
+        //        Console.WriteLine($"ScrapeWebsite failed: {ex.Message}");
+        //        throw;
+        //    }
+        //}
+
+        //public async Task<bool> ScrapeWebsite()
+        //{
+        //    try
+        //    {
+        //        int passed = 0;
+        //        int failed = 0;
+
+        //        var context = _climbRepo.FontRecommenderDBContext();
+
+        //        var web = new HtmlWeb();
+
+        //        // Load all climbs
+        //        var climbs = await _climbRepo.FindAllAsync(c => !c.Tags.Any() && !string.IsNullOrEmpty(c.Link));
+
+        //        // Cache all existing TagTypes
+        //        var tagTypes = _tagTypeRepo
+        //            .GetAll()
+        //            .ToDictionary(
+        //                t => t.Description,
+        //                StringComparer.OrdinalIgnoreCase);
+
+        //        foreach (var climb in climbs)
+        //        {
+        //            try
+        //            {
+        //                var doc = await web.LoadFromWebAsync($"{climb.Link}?locale=en");
+        //                var descriptionNode = doc.DocumentNode.SelectSingleNode("//div[@class='btype']");
+
+        //                if (descriptionNode == null)
+        //                    continue;
+
+        //                var tags = descriptionNode.InnerText
+        //                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        //                    .Select(t => t.Trim())
+        //                    .Where(t => !string.IsNullOrWhiteSpace(t));
+
+        //                // HashSet makes lookups O(1)
+        //                var existingTagIds = climb.Tags
+        //                    .Where(t => t.TagType != null)
+        //                    .Select(t => t.TagType.Id)
+        //                    .ToHashSet();
+
+        //                foreach (var tag in tags)
+        //                {
+        //                    // Get existing TagType from cache
+        //                    if (!tagTypes.TryGetValue(tag, out var tagType))
+        //                    {
+        //                        tagType = new TagType
+        //                        {
+        //                            Description = tag
+        //                        };
+
+        //                        await _tagTypeRepo.CreateAsync(tagType);
+
+        //                        tagTypes[tag] = tagType;
+        //                    }
+
+        //                    // Skip if climb already has this tag
+        //                    if (existingTagIds.Contains(tagType.Id))
+        //                        continue;
+
+        //                    climb.Tags.Add(new Tag
+        //                    {
+        //                        TagType = tagType,
+        //                        Climb = climb
+        //                    });
+
+        //                    existingTagIds.Add(tagType.Id);
+        //                }
+
+        //                //await _climbRepo.UpdateAsync(climb);
+
+        //                passed++;
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                failed++;
+        //                Console.WriteLine($"\nFailed to scrape '{climb.Link}': {ex.Message}");
+        //            }
+
+        //            Console.WriteLine($"\rPassed: {passed} | Failed: {failed}");
+        //        }
+
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"ScrapeWebsite failed: {ex.Message}");
+        //        throw;
+        //    }
+        //}
+
+        public async Task<bool> ScrapeWebsite()
+        {
+            try
+            {
+                const int BatchSize = 100;
+
+                int passed = 0;
+                int failed = 0;
+                int processedSinceSave = 0;
+
+                var context = _climbRepo.FontRecommenderDBContext();
+
+                var web = new HtmlWeb();
+
+                var climbs = await _climbRepo.FindAllAsync(
+                    c => !c.Tags.Any() && !string.IsNullOrEmpty(c.Link));
+
+                var tagTypes = _tagTypeRepo
+                    .GetAll()
+                    .ToDictionary(
+                        t => t.Description,
+                        StringComparer.OrdinalIgnoreCase);
+
+                foreach (var climb in climbs)
+                {
+                    try
+                    {
+                        var doc = await web.LoadFromWebAsync($"{climb.Link}?locale=en");
+
+                        var descriptionNode = doc.DocumentNode.SelectSingleNode("//div[@class='btype']");
+
+                        if (descriptionNode == null)
+                            continue;
+
+                        var tags = descriptionNode.InnerText
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(t => t.Trim())
+                            .Where(t => !string.IsNullOrWhiteSpace(t));
+
+                        var existingTagIds = climb.Tags
+                            .Where(t => t.TagType != null)
+                            .Select(t => t.TagType.Id)
+                            .ToHashSet();
+
+                        foreach (var tag in tags)
+                        {
+                            if (!tagTypes.TryGetValue(tag, out var tagType))
+                            {
+                                tagType = new TagType
+                                {
+                                    Description = tag
+                                };
+
+                                context.Add(tagType);
+
+                                tagTypes[tag] = tagType;
+                            }
+
+                            if (existingTagIds.Contains(tagType.Id))
+                                continue;
+
+                            climb.Tags.Add(new Tag
+                            {
+                                TagType = tagType,
+                                Climb = climb
+                            });
+
+                            existingTagIds.Add(tagType.Id);
+                        }
+
+                        passed++;
+                        processedSinceSave++;
+
+                        if (processedSinceSave >= BatchSize)
+                        {
+                            await context.SaveChangesAsync();
+                            context.ChangeTracker.Clear();
+
+                            processedSinceSave = 0;
+
+                            Console.WriteLine($"\nSaved batch ({passed} climbs processed)");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        Console.WriteLine($"\nFailed to scrape '{climb.Link}': {ex.Message}");
+                    }
+
+                    Console.Write($"\rPassed: {passed} | Failed: {failed}");
+                }
+
+                // Save anything remaining
+                if (processedSinceSave > 0)
+                {
+                    await context.SaveChangesAsync();
+                    context.ChangeTracker.Clear();
+                }
+
+                Console.WriteLine();
+                Console.WriteLine($"Finished. Passed: {passed}, Failed: {failed}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ScrapeWebsite failed: {ex.Message}");
+                throw;
+            }
+        }
 
         public async Task<bool> MigrateAllData()
         {
@@ -102,28 +379,28 @@ namespace BoolderDataMigration.Core.Service
                                     case "popular":
                                         Tag tag = new()
                                         {
-                                            TagType = eTag.Popular
+                                            TagType = _tagTypeRepo.FindAsync(t => t.Description.ToLower() == "popular").Result ?? new TagType { Description = "Popular" }
                                         };
                                         crag.Tags.Add(tag);
                                         break;
                                     case "beginner_friendly":
                                         Tag beginnerTag = new()
                                         {
-                                            TagType = eTag.BeginnerFriendly
+                                            TagType = _tagTypeRepo.FindAsync(t => t.Description.ToLower() == "beginner friendly").Result ?? new TagType { Description = "Beginner Friendly" }
                                         };
                                         crag.Tags.Add(beginnerTag);
                                         break;
                                     case "family_friendly":
                                         Tag familyTag = new()
                                         {
-                                            TagType = eTag.FamilyFriendly
+                                            TagType = _tagTypeRepo.FindAsync(t => t.Description.ToLower() == "family friendly").Result ?? new TagType { Description = "Family Friendly" }
                                         };
                                         crag.Tags.Add(familyTag);
                                         break;
                                     case "dry_fast":
                                         Tag dryTag = new()
                                         {
-                                            TagType = eTag.DryFast
+                                            TagType = _tagTypeRepo.FindAsync(t => t.Description.ToLower() == "dry fast").Result ?? new TagType { Description = "Dry Fast" }
                                         };
                                         crag.Tags.Add(dryTag);
                                         break;

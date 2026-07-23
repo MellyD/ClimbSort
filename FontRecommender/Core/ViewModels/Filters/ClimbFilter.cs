@@ -5,7 +5,7 @@ namespace FontRecommender.Core.ViewModels.Filters
     public class ClimbFilter: BasicClimbFilterComponents
     {
         public List<int>? WallTypeIds { get; set; } = [];
-        public List<eTag>? Tags { get; set; } = [];
+        public List<int>? Tags { get; set; } = [];
     }
 
     public class AdvancedClimbFilter
@@ -41,7 +41,7 @@ namespace FontRecommender.Core.ViewModels.Filters
     public class AdvancedClimbFilterComponent: BasicClimbFilterComponents
     {
         public int? WallTypeId { get; set; }
-        public List<eTag>? Tags { get; set; } = [];
+        public List<int>? Tags { get; set; } = [];
     }
 
     public class BasicClimbFilterComponents
@@ -56,6 +56,5 @@ namespace FontRecommender.Core.ViewModels.Filters
         public int? MinPopularity { get; set; }
         public int? MaxPopularity { get; set; }
         public bool? SitStart { get; set; }
-        public bool? Dangerous { get; set; }
     }
 }

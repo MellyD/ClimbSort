@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using static FontRecommender.Core.Enums;
+﻿using FontRecommender.Core.Models.Static;
+using System.ComponentModel.DataAnnotations;
 
 namespace FontRecommender.Core.Models.Generic
 {
@@ -7,7 +7,7 @@ namespace FontRecommender.Core.Models.Generic
     {
         [Key]
         public int Id { get; set; }
-        public required eTag TagType { get; set; }
+        public required virtual TagType TagType { get; set; }
         public virtual Crag? Crag { get; set; }
         public virtual Climb? Climb { get; set; }
     }

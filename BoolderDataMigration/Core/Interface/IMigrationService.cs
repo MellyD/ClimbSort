@@ -7,6 +7,7 @@ namespace BoolderDataMigration.Core.Interface
 {
     public interface IMigrationService
     {
+        Task<bool> ScrapeWebsite();
         Task<bool> MigrateData(string filePath, eDataType eDataType);
         Task<bool> MigrateAllData();
         Task<bool> ImportLinks(string filePath);

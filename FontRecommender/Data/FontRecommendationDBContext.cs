@@ -1,5 +1,6 @@
 ﻿using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
+using FontRecommender.Core.Models.Static;
 using Microsoft.EntityFrameworkCore;
 using System.Net.NetworkInformation;
 
@@ -63,7 +64,16 @@ namespace FontRecommender.Data
                 entity.ToTable("Crag").HasIndex(s => s.ModifiedDate).IsDescending(true);
             });
             modelBuilder.Entity<Coordinates>().ToTable("Coordinates");
-            modelBuilder.Entity<Tag>().ToTable("Tag");
+            modelBuilder.Entity<TagType>().ToTable("TagType");
+            modelBuilder.Entity<Tag>(entity =>
+            {
+                entity.ToTable("Tag");
+
+                entity
+                .HasOne(s => s.TagType)
+                .WithMany(c => c.Tags)
+                .OnDelete(DeleteBehavior.ClientCascade);
+            });
             modelBuilder.Entity<Grade>(entity =>
             {
                 entity

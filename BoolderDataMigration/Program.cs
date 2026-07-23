@@ -33,7 +33,7 @@ builder.Configuration.AddAzureAppConfiguration(options =>
 
 builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"]);
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif
@@ -72,13 +72,13 @@ host.Run();
 static async Task RunProgram(IServiceProvider services)
 {
 
-    string bleauHtmlPath = Path.Combine(
-        AppContext.BaseDirectory,
-        "bleauAreas.html");
+    //string bleauHtmlPath = Path.Combine(
+    //    AppContext.BaseDirectory,
+    //    "bleauAreas.html");
     using var scope = services.CreateScope();
     var provider = scope.ServiceProvider;
     var service = provider.GetService<IMigrationService>();
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-    bool migrationSucceeded = await service?.ImportLinks(bleauHtmlPath);
+    bool migrationSucceeded = await service?.ScrapeWebsite();
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 }

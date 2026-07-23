@@ -2,6 +2,7 @@
 using FontRecommender.Core.Interfaces;
 using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
+using FontRecommender.Core.Models.Static;
 using FontRecommender.Core.ViewModels;
 using FontRecommender.Core.ViewModels.Filters;
 using FontRecommender.Core.ViewModels.Generic;
@@ -339,12 +340,11 @@ namespace FontRecommender.Core.Services
                 (filter.MaxRating == null || (s.Rating != null && s.Rating <= filter.MaxRating)) &&
                 (filter.MinPopularity == null || (s.Popularity != null && s.Popularity >= filter.MinPopularity)) &&
                 (filter.MaxPopularity == null || (s.Popularity != null && s.Popularity <= filter.MaxPopularity)) &&
-                (filter.SitStart == null || s.SitStart == filter.SitStart) &&
-                (filter.Dangerous == null || s.Dangerous == filter.Dangerous)
+                (filter.SitStart == null || s.SitStart == filter.SitStart)
                 );
             climbs = climbs.Where(c =>
                                 c.Tags
-                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType.Id))
                                     .Select(t => t.TagType)
                                     .Distinct()
                                     .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
@@ -375,8 +375,7 @@ namespace FontRecommender.Core.Services
                     (component.MinPopularity == null || (s.Popularity != null && s.Popularity >= component.MinPopularity)) &&
                     (component.MaxPopularity == null || (s.Popularity != null && s.Popularity <= component.MaxPopularity)) &&
                     (component.WallTypeId == null || s.WallType.Id == component.WallTypeId) &&
-                    (component.SitStart == null || s.SitStart == component.SitStart) &&
-                    (component.Dangerous == null || s.Dangerous == component.Dangerous)
+                    (component.SitStart == null || s.SitStart == component.SitStart)
                     );
 
                 if (component.Tags?.Any() == true)
@@ -384,7 +383,7 @@ namespace FontRecommender.Core.Services
                     foreach (var tag in component.Tags)
                     {
                         climbs = climbs.Where(c =>
-                            c.Tags.Any(t => t.TagType == tag));
+                            c.Tags.Any(t => t.TagType.Id == tag));
                     }
                 }
 
@@ -411,7 +410,7 @@ namespace FontRecommender.Core.Services
                     );
                 crags = crags.Where(c =>
                                     c.Tags
-                                        .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                        .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType.Id))
                                         .Select(t => t.TagType)
                                         .Distinct()
                                         .Count() == (filter.Tags != null ? filter.Tags.Count : 0));
@@ -448,7 +447,7 @@ namespace FontRecommender.Core.Services
                 );
             crags = crags.Where(c =>
                                 c.Tags
-                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType))
+                                    .Where(t => filter.Tags == null || filter.Tags.Contains(t.TagType.Id))
                                     .Select(t => t.TagType)
                                     .Distinct()
                                     .Count() == (filter.Tags != null ? filter.Tags.Count : 0));

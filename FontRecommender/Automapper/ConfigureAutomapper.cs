@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FontRecommender.Core.Models;
 using FontRecommender.Core.Models.Generic;
+using FontRecommender.Core.Models.Static;
 using FontRecommender.Core.ViewModels;
 using FontRecommender.Core.ViewModels.Filters;
 using FontRecommender.Core.ViewModels.Generic;
@@ -56,8 +57,8 @@ namespace FontRecommender.Automapper
                 .ForMember(dest => dest.MinPopularity, opt => opt.Ignore());
 
             CreateMap<Tag, TagModel>()
-                .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => Enum.GetName(src.TagType)))
-                .ForMember(dest => dest.TagId, opt => opt.MapFrom(src => (int)src.TagType));
+                .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => src.TagType.Description))
+                .ForMember(dest => dest.TagId, opt => opt.MapFrom(src => src.TagType.Id));
 
             CreateMap<GradingSystem, GradingSystemModel>()
                 .ForMember(dest => dest.GradingSystemName, opt => opt.MapFrom(src => src.Name))
