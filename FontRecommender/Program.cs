@@ -14,22 +14,23 @@ using Serilog;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
-string connectionString = builder.Configuration["AppConfig:Endpoint"] ?? throw new KeyNotFoundException("Configuration value 'AppConfig:Endpoint' is required.");
 
-var credential = new DefaultAzureCredential();
+string endpoint = builder.Configuration["AppConfigEndpoint"] ?? "";
 
-var client = new SecretClient(
-    new Uri("https://melling-vault-dev.vault.azure.net/"),
-    credential);
+#if DEBUG
+endpoint = builder.Configuration["AppConfig:Endpoint"] ?? throw new KeyNotFoundException("Configuration value 'AppConfig:Endpoint' is required.");
+#endif
 
-var secret = await client.GetSecretAsync("AutomapperLicenseKey");
-
-//Console.WriteLine(secret.Value);
+var credential = new DefaultAzureCredential(
+    new DefaultAzureCredentialOptions()
+    {
+        ExcludeManagedIdentityCredential = Environment.GetEnvironmentVariable("CONTAINER_APP_NAME") == null
+    });
 
 //For this project, we are using Azure App Configuration to store sensitive configuration items.
 builder.Configuration.AddAzureAppConfiguration(options => 
 {
-    options.Connect(connectionString)
+    options.Connect(new Uri(endpoint), credential)
            .ConfigureKeyVault(kv =>
            {
                kv.SetCredential(credential);

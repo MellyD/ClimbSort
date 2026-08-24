@@ -1,4 +1,5 @@
-﻿using BoolderDataMigration.AutoMapper;
+﻿using Azure.Identity;
+using BoolderDataMigration.AutoMapper;
 using BoolderDataMigration.Core.Interface;
 using BoolderDataMigration.Core.Service;
 using BoolderDataMigration.Models;
@@ -19,14 +20,25 @@ HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 
+string endpoint = builder.Configuration["AppConfigEndpoint"] ?? "";
+
+#if DEBUG
+endpoint = builder.Configuration["AppConfig:Endpoint"] ?? throw new KeyNotFoundException("Configuration value 'AppConfig:Endpoint' is required.");
+#endif
+
+var credential = new DefaultAzureCredential(
+    new DefaultAzureCredentialOptions()
+    {
+        ExcludeManagedIdentityCredential = Environment.GetEnvironmentVariable("CONTAINER_APP_NAME") == null
+    });
+
 //For this project, we are using Azure App Configuration to store sensitive configuration items.
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
-    string connectionString = builder.Configuration["AppConfig:Endpoint"] ?? throw new InvalidOperationException("Configuration value 'AppConfig:Endpoint' is required.");
-    options.Connect(connectionString)
+    options.Connect(new Uri(endpoint), credential)
            .ConfigureKeyVault(kv =>
            {
-               kv.SetCredential(new Azure.Identity.DefaultAzureCredential());
+               kv.SetCredential(credential);
            })
            .Select(KeyFilter.Any, LabelFilter.Null)
            .Select(KeyFilter.Any, "FontRec");
