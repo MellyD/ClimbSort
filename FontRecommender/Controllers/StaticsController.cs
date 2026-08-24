@@ -20,6 +20,12 @@ namespace FontRecommender.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// This endpoint returns view models of all Wall Types registered into the system.
+        /// </summary>
+        /// <returns>View models of Wall Types</returns>
+        /// <response code="200">All Wall Types returned in view models.</response>
+        /// <response code="404">No WallTypes found.</response>
         [HttpGet("/api/[controller]/[action]")]
         public IActionResult GetWallTypes()
         {
@@ -41,12 +47,19 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint retrieves view models of all Tags in the system for either Climbs or Crags.
+        /// </summary>
+        /// <param name="forClimbs">Boolean indicating whether Climbs' or Crags' Tags are being retrieved.</param>
+        /// <returns>View models of all Tags for either Climbs or Crags</returns>
+        /// <response code="200">All Tags for either Climbs or Crags returned in view models.</response>
+        /// <response code="404">No Tags found.</response>
         [HttpGet("/api/[controller]/[action]")]
-        public IActionResult GetTags()
+        public async Task<IActionResult> GetTags([FromQuery]bool forClimbs)
         {
             try
             {
-                List<TagModel> models = GetTagModels();
+                IEnumerable<TagModel> models = await _fontService.GetTags(forClimbs);
 
                 return Ok(models);
             }
@@ -55,17 +68,6 @@ namespace FontRecommender.Controllers
                 _logger.Error("Something went wrong fetching wall types. Ex: {ex}", ex.Message);
                 return Problem();
             }
-        }
-
-        private static List<TagModel> GetTagModels()
-        {
-            return Enum.GetValues<eTag>()
-                .Select(tag => new TagModel
-                {
-                    TagName = Enum.GetName(tag) ?? tag.ToString(),
-                    TagId = (int)tag
-                })
-                .ToList();
         }
     }
 }

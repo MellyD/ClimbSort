@@ -1,4 +1,5 @@
 using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using FontRecommender;
 using FontRecommender.Authentication;
 using FontRecommender.Automapper;
@@ -10,24 +11,38 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Identity.Client;
 using Serilog;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
-string connectionString = builder.Configuration["AppConfig:Endpoint"] ?? throw new InvalidOperationException("Configuration value 'AppConfig:Endpoint' is required.");
+string connectionString = builder.Configuration["AppConfig:Endpoint"] ?? throw new KeyNotFoundException("Configuration value 'AppConfig:Endpoint' is required.");
 
+var credential = new DefaultAzureCredential();
+
+var client = new SecretClient(
+    new Uri("https://melling-vault-dev.vault.azure.net/"),
+    credential);
+
+var secret = await client.GetSecretAsync("AutomapperLicenseKey");
+
+//Console.WriteLine(secret.Value);
+
+//For this project, we are using Azure App Configuration to store sensitive configuration items.
 builder.Configuration.AddAzureAppConfiguration(options => 
 {
     options.Connect(connectionString)
            .ConfigureKeyVault(kv =>
            {
-               kv.SetCredential(new DefaultAzureCredential());
+               kv.SetCredential(credential);
            })
            .Select(KeyFilter.Any, LabelFilter.Null)
            .Select(KeyFilter.Any, "FontRec");
 });
 
+//Logging is then configured using Serilog.
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(builder.Configuration.GetSection("FontRec:Serilog")));
 
+//Authentication is configured using Microsoft Identity Web, which allows the application to authenticate users using Azure Active Directory. The authentication settings are fetched from the Azure App Configuration.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AccessScope", policy =>
@@ -36,6 +51,7 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
+// Add Microsoft Identity Web API authentication.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", builder =>
@@ -45,6 +61,8 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
+//Database context is initialised using the db connection string, fetched from the Azure App Configuration. The connection string is stored in a Key Vault for extra security.
 builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 {
     options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
@@ -54,43 +72,49 @@ builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 });
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddTransient(typeof(IFontService), typeof(FontService));
 builder.Services.AddTransient(typeof(IRepository<,>), typeof(Repository<,>));
-builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"],typeof(ConfigureAutomapper));
-builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec"));
+builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"],typeof(ConfigureAutomapper)); //License key is required for newer version of Automapper. It is fetched from the Azure App Configuration.
+builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec")); //The rest of the application configuration items are fetched and fill the config class (currently empty as no extra config items are yet required).
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+    options.IncludeXmlComments(xmlPath);
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the swagger FE for the application when it is in development.
+// Also enable HTTPS redirection in development to ensure that the application is accessed securely.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHttpsRedirection();
 }
 
+// Add security headers to the response to enhance security.
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000");
     await next.Invoke();
 });
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-app.UseSerilogRequestLogging(); 
+// Requests are logged using Serilog, which catalogues requests that have passed through the system for good historic security and data.
+app.UseSerilogRequestLogging();
 
+// CORS policy is applied to allow cross-origin requests from any origin, method, and header. This is useful for development and testing purposes, but should be restricted in production for security reasons.
 app.UseCors("CorsPolicy");
 app.UseRouting();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// Security headers are applied to the response to enhance security.
 app.UseXContentTypeOptions();
 app.UseXfo(opt => opt.Deny());
 app.UseReferrerPolicy(opt => opt.SameOrigin());

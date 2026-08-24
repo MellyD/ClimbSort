@@ -7,6 +7,9 @@ using Microsoft.Identity.Client;
 
 namespace FontRecommender.Controllers
 {
+    /// <summary>
+    /// This controller handles all Crag endpoints.
+    /// </summary>
     [ApiController]
     [Route("/api/[controller]")]
     public class CragController : BaseController
@@ -19,6 +22,17 @@ namespace FontRecommender.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// This endpoint retrieves all of the Crags that match the given filter provided.
+        /// </summary>
+        /// <param name="filter">
+        /// - name: string (nullable)
+        /// - countryCode: string (nullable)
+        /// - tags: list of int (nullable)
+        /// </param>
+        /// <returns>IEnumerable of the Crags that match the filter provided.</returns>
+        /// <response code="200">Crags matching the filter were found.</response>
+        /// <response code="404">No Crags exist that match the given filter.</response>
         [HttpPost("/api/[controller]/GetAll")]
         public async Task<IActionResult> GetCrags([FromBody] CragFilter filter)
         {
@@ -27,6 +41,11 @@ namespace FontRecommender.Controllers
                 IEnumerable<CragSimpleModel> crags = await _fontService.GetCrags(filter);
                 return Ok(crags);
             }
+            catch(KeyNotFoundException ex)
+            {
+                _logger.Error(ex, "Error occurred while getting crags.");
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error occurred while getting crags.");
@@ -34,6 +53,17 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint retrieves all of the Crags that match the given filter provided. Keyset paginated based on pagination info given.
+        /// </summary>
+        /// <param name="filter">
+        /// Crag filter with additional keyset pagination information:
+        /// - pageSize: int
+        /// - lastItem: guid (nullable)
+        /// </param>
+        /// <returns>IEnumerable of the Crags that match the filter provided.</returns>
+        /// <response code="200">Crags matching the filter were found.</response>
+        /// <response code="404">No Crags exist that match the given filter.</response>
         [HttpPost("api/[controller]/Keyset")]
         public async Task<IActionResult> GetCragsKeysetPaginated([FromBody] KeysetCragFilter filter)
         {
@@ -42,6 +72,11 @@ namespace FontRecommender.Controllers
                 KeysetPaginateView<CragSimpleModel> crags = await _fontService.GetCragsKeysetPaginated<CragSimpleModel>(filter);
                 return Ok(crags);
             }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.Error(ex, "Error occurred while getting crags.");
+                return NotFound(ex.Message);
+            }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error occurred while getting crags.");
@@ -49,6 +84,13 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint retrieves the Crag matching the provided unique identifier.
+        /// </summary>
+        /// <param name="cragId"> Unique identifier of a Crag.</param>
+        /// <returns> View model of a Crag.</returns>
+        /// <response code="200">Crag matching the unique identifier was found.</response>
+        /// <response code="404">No Crag exists matching the given unique identifier.</response>
         [HttpGet("/api/[controller]/{cragId}")]
         public async Task<IActionResult> GetCrag(Guid cragId)
         {
@@ -69,6 +111,22 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint creates a new Crag based on the CragModel view model provided.
+        /// Upon successful creation, the endpoint returns the ID of the newly created crag.
+        /// </summary>
+        /// <param name="cragModel">
+        /// name: string
+        /// searchName: string (nullable)
+        /// countryCode: string
+        /// tags: list of tag view models
+        /// Tag Model:
+        /// - tagName: string
+        /// - tagId : int
+        /// </param>
+        /// <returns>Unique identifier of the created Crag.</returns>
+        /// <response code="200">Crag created successfully and unique identifier returned.</response>
+        /// <response code="400">Issue was found with the provided Crag information that prevented creation.</response>
         [HttpPost]
         public async Task<IActionResult> CreateCrag([FromBody] CragModel cragModel)
         {
@@ -77,10 +135,10 @@ namespace FontRecommender.Controllers
                 Guid cragId = await _fontService.CreateCrag(cragModel);
                 return Ok(cragId);
             }
-            catch (KeyNotFoundException ex)
+            catch (InvalidOperationException ex)
             {
                 _logger.Error(ex, "Crag not found.");
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -89,6 +147,23 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint updates an existring Crag based on the CragModel view model provided.
+        /// Upon successful updating, the endpoint returns the ID of the updated crag.
+        /// </summary>
+        /// <param name="cragModel">
+        /// name: string
+        /// searchName: string (nullable)
+        /// countryCode: string
+        /// tags: list of tag view models
+        /// Tag Model:
+        /// - tagName: string
+        /// - tagId : int
+        /// </param>
+        /// <returns>Unique identifier of the updated Crag.</returns>
+        /// <response code="200">Crag updated successfully and unique identifier returned.</response>
+        /// <response code="400">Issue was found with the provided Crag information that prevented updating.</response>
+        /// <response code="404">No Crag exists matching the given unique identifier.</response>
         [HttpPut]
         public async Task<IActionResult> UpdateCrag([FromBody] CragModel cragModel)
         {
@@ -109,6 +184,13 @@ namespace FontRecommender.Controllers
             }
         }
 
+        /// <summary>
+        /// This endpoint deletes an existing Crag that matches the given unique identifier.
+        /// </summary>
+        /// <param name="cragId">Unique identifier of a Crag.</param>
+        /// <returns>Void return.</returns>
+        /// <response code="200">Crag deleted successfully.</response>
+        /// <response code="404">No Crag exists matching the given unique identifier.</response>
         [HttpDelete("/api/[controller]/{cragId}")]
         public async Task<IActionResult> DeleteCrag(Guid cragId)
         {

@@ -19,6 +19,7 @@ HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                      .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 
+//For this project, we are using Azure App Configuration to store sensitive configuration items.
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
     string connectionString = builder.Configuration["AppConfig:Endpoint"] ?? throw new InvalidOperationException("Configuration value 'AppConfig:Endpoint' is required.");
@@ -31,6 +32,7 @@ builder.Configuration.AddAzureAppConfiguration(options =>
            .Select(KeyFilter.Any, "FontRec");
 });
 
+//Database context is initialised using the db connection string, fetched from the Azure App Configuration. The connection string is stored in a Key Vault for extra security.
 builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 {
     options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
@@ -39,16 +41,19 @@ builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 #endif
 });
 
+//The SqlLite Boolder db path is assembled using the base directory of the application and the name of the database file. This ensures that the database file is located in a consistent location relative to the application.
 var dbPath = Path.Combine(
     AppContext.BaseDirectory,
     "boolder.db");
 
+//The context to this database is then initialised.
 builder.Services.AddDbContext<BoolderContext>(options =>
 {
     options.UseLazyLoadingProxies()
            .UseSqlite($"Data Source={dbPath}");
 });
 
+//Logging is then configured using Serilog.
 builder.Services.AddSerilog((context, configuration) =>
 {
     var sectionName = builder.Configuration["FontRec:Serilog"];
@@ -61,7 +66,7 @@ builder.Services.AddSerilog((context, configuration) =>
 
 builder.Services.AddTransient(typeof(IRepository<,>), typeof(Repository<,>));
 builder.Services.AddTransient(typeof(IMigrationService), typeof(MigrationService));
-builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"], typeof(MigrationAutomapper));
+builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"], typeof(MigrationAutomapper)); //License key is required for newer version of Automapper. It is fetched from the Azure App Configuration.
 builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec"));
 
 using IHost host = builder.Build();
@@ -69,6 +74,8 @@ using IHost host = builder.Build();
 await RunProgram(host.Services);
 host.Run();
 
+// The RunProgram method is responsible for executing the main logic of the application.
+// It creates a scope for the services, retrieves the IMigrationService, and calls its ScrapeWebsite (Or the other methods in the service class) method to perform the migration.
 static async Task RunProgram(IServiceProvider services)
 {
 

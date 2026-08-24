@@ -22,6 +22,7 @@ namespace FontRecommender.Core.Interfaces
         Task<Guid> CreateCrag(CragModel model);
         Task<Guid> UpdateCrag(CragModel model);
         Task<bool> DeleteCrag(Guid cragId);
+        Task<IEnumerable<TagModel>> GetTags(bool forClimbs);
         IEnumerable<GradingSystemModel> GetGradingSystems();
         Task<IEnumerable<GradeModel>> GetGradesForSystem(int gradingSystemId);
         IEnumerable<WallTypeModel> GetWallTypes();

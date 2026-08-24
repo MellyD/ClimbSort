@@ -2,12 +2,18 @@
 {
     public class Enums
     {
+        /// <summary>
+        /// Type of log being created, used to identify what severity of log should be used in a private helper method for logging.
+        /// </summary>
         public enum eLogMode
         {
             Success = 1,
             AuthorizationFailure = 2,
             Failed = 3
         }
+        /// <summary>
+        /// Type of request being made, used to enrich logs in private helper method.
+        /// </summary>
         public enum eRequestType
         {
             GET = 1,
@@ -16,6 +22,9 @@
             DELETE = 4,
             PATCH = 5
         }
+        /// <summary>
+        /// Type of discipline a Grading System is associated with.
+        /// </summary>
         public enum eDisciplineType
         {
             Boulder = 1,
@@ -24,13 +33,9 @@
             Ice = 4,
             Mixed = 5
         }
-        public enum eDifficultyConsensus
-        {
-            Soft = 1,
-            Accurate = 2,
-            Hard = 3,
-            Unrepeated = 4
-        }
+        /// <summary>
+        /// Type of Coordinate pairing, used to identify what kind of Coordinates are saved against Climb/Crag/Topography.
+        /// </summary>
         public enum eCoordinateType
         {
             Point = 1,
@@ -38,13 +43,6 @@
             NEPoint = 3,
             TopographyLine = 4,
             CragPolygon = 5
-        }
-        public enum eTag
-        {
-            Popular = 1,
-            BeginnerFriendly = 2,
-            FamilyFriendly = 3,
-            DryFast = 4
         }
     }
 }

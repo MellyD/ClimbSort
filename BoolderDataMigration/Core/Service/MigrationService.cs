@@ -11,6 +11,7 @@ using FontRecommender.Data.Repository;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,10 @@ using static System.Net.WebRequestMethods;
 
 namespace BoolderDataMigration.Core.Service
 {
+    /// <summary>
+    /// This is a service class containing methods for the data migration console application to migrate data from the Boolder database to our system.
+    /// It also implements website scraping functionality to provide additional tagging information for climbs.
+    /// </summary>
     public class MigrationService: IMigrationService
     {
         #region Setup
@@ -77,6 +82,9 @@ namespace BoolderDataMigration.Core.Service
         }
         #endregion
 
+        // This method was an earlier version of the ScrapeWebsite method, which has been commented out. It was designed to scrape climb information from a website and update the database with tags based on the scraped data.
+        // The method iterates through all climbs, loads the corresponding web page, extracts tags from the HTML, and updates the database accordingly. It also keeps track of the number of successful and failed scrapes, printing the results to the console.
+        // I am preserving this commented-out code for reference, as it may contain useful logic or ideas for future implementations, but it is not currently in use.
         //public async Task<bool> ScrapeWebsite() 
         //{
         //    try
@@ -237,50 +245,66 @@ namespace BoolderDataMigration.Core.Service
         //    }
         //}
 
+        /// <summary>
+        /// This method scrapes climb information from the bleau.info website and updates our database with tags based on the "tag" section of each climb.
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> ScrapeWebsite()
         {
             try
             {
+                //I've opted to save the changes in batches to improve performance and reduce the number of database calls. The BatchSize constant defines how many climbs will be processed before saving changes to the database.
                 const int BatchSize = 100;
 
                 int passed = 0;
                 int failed = 0;
                 int processedSinceSave = 0;
 
+                //I've also decided to do database calls via the context, in order to reduce the number of calls to the repository and improve performance. This is a trade-off between performance and encapsulation, but in this case, I believe it's justified.
+                //It also allows me to make changes without saving to the database immediately, which is useful for batch processing.
                 var context = _climbRepo.FontRecommenderDBContext();
 
                 var web = new HtmlWeb();
 
+                //We only want to scrape climbs that don't have any tags yet and have a valid link, so we filter the climbs accordingly.
                 var climbs = await _climbRepo.FindAllAsync(
                     c => !c.Tags.Any() && !string.IsNullOrEmpty(c.Link));
 
+                //We cache all existing TagTypes in a dictionary for quick lookups, which improves performance when checking if a tag already exists.
                 var tagTypes = _tagTypeRepo
                     .GetAll()
                     .ToDictionary(
                         t => t.Description,
                         StringComparer.OrdinalIgnoreCase);
 
+                //We then iterate through all of the climbs in the list, scraping the website for each climb's tags and updating the database accordingly.
                 foreach (var climb in climbs)
                 {
                     try
                     {
+                        //The climb's corresponding page's HTML is loaded using HtmlAgilityPack.
                         var doc = await web.LoadFromWebAsync($"{climb.Link}?locale=en");
 
+                        //The "tag" section is extracted from the HTML, this section of css class 'btype' contains the tags for the climb.
                         var descriptionNode = doc.DocumentNode.SelectSingleNode("//div[@class='btype']");
 
+                        //If there is nothing in the "tag" section, we skip to the next climb.
                         if (descriptionNode == null)
                             continue;
 
+                        //The section is then split into individual tags, which are trimmed of whitespace and filtered to remove any empty or whitespace-only strings.
                         var tags = descriptionNode.InnerText
                             .Split(',', StringSplitOptions.RemoveEmptyEntries)
                             .Select(t => t.Trim())
                             .Where(t => !string.IsNullOrWhiteSpace(t));
 
+                        //We create a HashSet of the existing tag IDs for the climb, which allows for O(1) lookups when checking if a tag already exists for the climb.
                         var existingTagIds = climb.Tags
                             .Where(t => t.TagType != null)
                             .Select(t => t.TagType.Id)
                             .ToHashSet();
 
+                        //We then iterate through all of the tags for the climb, checking if each tag already exists in the database and creating it if it doesn't. If the tag already exists for the climb, we skip to the next tag.
                         foreach (var tag in tags)
                         {
                             if (!tagTypes.TryGetValue(tag, out var tagType))
@@ -307,9 +331,11 @@ namespace BoolderDataMigration.Core.Service
                             existingTagIds.Add(tagType.Id);
                         }
 
+                        //We iterate the counters.
                         passed++;
                         processedSinceSave++;
 
+                        //If we've processed enough climbs to reach the batch size, we save the changes to the database and clear the change tracker to free up memory.
                         if (processedSinceSave >= BatchSize)
                         {
                             await context.SaveChangesAsync();
@@ -320,12 +346,14 @@ namespace BoolderDataMigration.Core.Service
                             Console.WriteLine($"\nSaved batch ({passed} climbs processed)");
                         }
                     }
+                    //If an exception occurs during the scraping or database update process, we catch it, increment the failed counter, and print an error message to the console.
                     catch (Exception ex)
                     {
                         failed++;
                         Console.WriteLine($"\nFailed to scrape '{climb.Link}': {ex.Message}");
                     }
 
+                    //This acts as a live progress indicator, showing the number of successful and failed scrapes in real-time on the console.
                     Console.Write($"\rPassed: {passed} | Failed: {failed}");
                 }
 
@@ -348,17 +376,26 @@ namespace BoolderDataMigration.Core.Service
             }
         }
 
+        /// <summary>
+        /// This method migrates all data from the Boolder sqllite database to our system, including crags, circuits, climbs, and topographies. 
+        /// It handles the mapping of data between the two systems and ensures that all necessary relationships are maintained.
+        /// This is done in sections, starting with crags, then circuits, climbs, and finally topographies. Each section is processed in a try-catch block to ensure that if an error occurs in one section, it does not prevent the migration of the other sections.
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> MigrateAllData()
         {
             try
             {
                 #region Crags
+                //We use repositories similar to the ones we use to access our own database. Using a context we set to access the sqllite database, we can access the Boolder database and retrieve all of the areas (crags) to be migrated.
+                //This context and the corresponding models were all built using the ef core console tools.
                 List<Area> areas = _boolderAreaRepo.GetAll().ToList();
                 int cragCounter = 0;
                 foreach (Area area in areas)
                 {
                     try
                     {
+                        //New crag item is created based on the Boolder area data, and the necessary properties are set. The country code is hardcoded to "FRA" since all climbs in the Boolder database are in Fontainebleau, France.
                         Crag crag = new()
                         {
                             Name = area.Name,
@@ -369,11 +406,15 @@ namespace BoolderDataMigration.Core.Service
                             SearchName = area.NameSearchable,
                             Id = Guid.NewGuid()
                         };
+
+                        //Tags for the crags are included in the database, so they are split into a list and added to the crag's tags. If a tag type does not already exist in our database, it is created.
                         List<string>? tagStrings = area.Tags?.Split(",").ToList();
                         foreach (string tagString in tagStrings ?? new List<string>())
                         {
                             if (!string.IsNullOrEmpty(tagString))
                             {
+                                //Since we have some predefined tag types in our system, we can map the Boolder tags to our tag types. If a tag type does not exist, it is created.
+                                //The mapping was mostly needed to keep the naming convention more clean, which the boolder database had some inconsistencies with.
                                 switch (tagString)
                                 {
                                     case "popular":
@@ -410,6 +451,7 @@ namespace BoolderDataMigration.Core.Service
                             }
                         }
 
+                        //Coordinates are then added for the crag, including the south-west and north-east points. These are used to define the bounding box for the crag on a map.
                         Coordinates swCoordinates = new()
                         {
                             CoordinateType = eCoordinateType.SWPoint,
@@ -427,6 +469,7 @@ namespace BoolderDataMigration.Core.Service
                         crag.Coordinates.Add(swCoordinates);
                         crag.Coordinates.Add(neCoordinates);
 
+                        //Counter is incremented after crag is created.
                         await _cragRepo.CreateAsync(crag);
                         cragCounter++;
                     }
@@ -439,6 +482,7 @@ namespace BoolderDataMigration.Core.Service
                 Console.WriteLine($"Imported {cragCounter} Crags");
                 #endregion
 
+                //Same is done for circuits.
                 #region Circuits
                 List<Models.Circuit> circuits = _boolderCircuitRepo.GetAll().ToList();
 
@@ -484,6 +528,7 @@ namespace BoolderDataMigration.Core.Service
                 Console.WriteLine($"Imported {circuitCounter} Circuits");
                 #endregion
 
+                //Some logic is different for climbs, any differences are explained in the comments below.
                 #region Climbs
                 List<Problem> problems = _boolderProblemRepo.GetAll().ToList();
 
@@ -493,6 +538,7 @@ namespace BoolderDataMigration.Core.Service
                     try
                     {
                         string wallTypeName = "";
+                        //Some manual mapping is performed for wall types. This is due to naming inconsitencies between my preferred naming convention and the boolder database's.
                         switch (problem.Steepness)
                         {
                             case "wall":
@@ -505,6 +551,7 @@ namespace BoolderDataMigration.Core.Service
                                 wallTypeName = problem.Steepness;
                                 break;
                         }
+                        //Wall type is fetched based on this name.
                         WallType walltype = await _wallTypeRepo.FindAsync(w => w.Description.ToLower() == wallTypeName.ToLower()) ?? throw new KeyNotFoundException($"Wall type {wallTypeName} not found in database");
                         Climb climb = new()
                         {
@@ -519,10 +566,12 @@ namespace BoolderDataMigration.Core.Service
                             SearchName = problem.NameSearchable
                         };
 
+                        //Crag is fetched based on the area id of the problem, finding the crag based on the area
                         Area? areaForSearch = areas.Where(a => a.Id == problem.AreaId).FirstOrDefault();
                         if (areaForSearch != null)
                             climb.Crag = await _cragRepo.FindAsync(c => c.Name == areaForSearch.Name) ?? throw new KeyNotFoundException($"Crag with name {areaForSearch.Name} not found in database");
 
+                        //Circuit is fetched based on a similar precident. If either cannot be found, an exception is thrown.
                         Models.Circuit? circuitforSearch = circuits.Where(c => c.Id == problem.CircuitId).FirstOrDefault();
                         if (circuitforSearch != null)
                             climb.Circuit = await _circuitRepo.FindAsync(c => c.Colour == circuitforSearch.Color) ?? throw new KeyNotFoundException($"Circuit with colour {circuitforSearch.Color} not found in database");
@@ -547,6 +596,11 @@ namespace BoolderDataMigration.Core.Service
                 Console.WriteLine($"Imported {problemCounter} Problems");
                 #endregion
 
+                //Topographies are handled slightly differently.
+                //I treat the x and y coordinates meant to be placed on images as latitude and longitude coordinates, which is not technically correct, but it allows me to use the same coordinate system for all of my data.
+                //I then save the reference for the image to the topography, using the assets link assembled from the bleau info id of the problem.
+                //With both image and coordinates, the line for the route can then be displayed on the image in the front-end.
+                //This is a trade-off between accuracy and simplicity, but I believe it's justified in this case.
                 #region Topographies
                 List<Line> lines = _boolderLineRepo.GetAll().ToList();
 
@@ -604,6 +658,13 @@ namespace BoolderDataMigration.Core.Service
             }
         }
 
+        /// <summary>
+        /// This method imports links for climbs using the logic of the bleau.info website. it fetches the bleau.info Id of the climb from the boolder sqllite database,
+        /// matches it with the endpoint of the corresponding crag using the imported list of all crag endpoints read out of the html file provided (via the filePath input).
+        /// This is then used to assemble the link for the climb, which is then saved against the climb to the database.
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
         public async Task<bool> ImportLinks(string filePath)
         {
             int passed = 0;
@@ -622,6 +683,8 @@ namespace BoolderDataMigration.Core.Service
 
                 var links = doc.DocumentNode.SelectNodes("//a");
 
+                //We filter the links to only include those that have a href attribute, a non-empty inner text, and do not contain the string "toggle_favarea" in the href.
+                //We then group the links by their inner text and create a dictionary where the key is the inner text and the value is the href attribute value (with the leading '/' removed).
                 var dict = links.Where(a =>
                                 {
                                     var href = a.Attributes["href"]?.Value;
@@ -652,6 +715,7 @@ namespace BoolderDataMigration.Core.Service
                             continue;
                         }
 
+                        //We fetch the crag name from the climb's crag property. If the crag name is null or empty, we increment the failed counter and continue to the next problem.
                         string? cragName = climb.Crag?.Name;
                         if (string.IsNullOrEmpty(cragName))
                         {
@@ -659,6 +723,7 @@ namespace BoolderDataMigration.Core.Service
                             continue;
                         }
 
+                        //We then try to get the crag extension from the dictionary we created earlier. If the crag extension is null or empty, we increment the failed counter and continue to the next problem.
                         dict.TryGetValue(cragName, out string? cragExtension);
                         if (string.IsNullOrEmpty(cragExtension))
                         {
@@ -666,6 +731,7 @@ namespace BoolderDataMigration.Core.Service
                             continue;
                         }
 
+                        //We assemble the link.
                         climb.Link = $"https://bleau.info/{cragExtension}/{problem.BleauInfoId}.html";
                         await _climbRepo.UpdateAsync(climb);
                         passed++;
@@ -685,6 +751,12 @@ namespace BoolderDataMigration.Core.Service
             } 
         }
 
+        /// <summary>
+        /// This was the original migration method, using the json provided in the BoolderDb github project. It is no longer used, but I have kept it here for reference.
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="eDataType"></param>
+        /// <returns></returns>
         public async Task<bool> MigrateData(string filePath, eDataType eDataType)
         {
             try
@@ -971,6 +1043,16 @@ namespace BoolderDataMigration.Core.Service
 
         }
 
+        /// <summary>
+        /// This is a helper method used to determine if a given coordinate (longitude, latitude) is contained within the bounds of a crag.
+        /// It checks for three types of coordinate representations: a single point, a bounding box defined by southwest and northeast points, and a polygon defined by multiple points. 
+        /// The method returns true if the coordinate is contained within any of these representations, and false otherwise.
+        /// This is in order to place a climb within a crag based on the climb's coordinates and the crag's coordinates. Less necessary now that the Boolder data has been enriched with crag information, but still useful for future-proofing.
+        /// </summary>
+        /// <param name="crag"></param>
+        /// <param name="longitude"></param>
+        /// <param name="latitude"></param>
+        /// <returns></returns>
         private static bool ContainsCoordinate(Crag crag, double longitude, double latitude)
         {
             var point = crag.Coordinates
@@ -1008,6 +1090,14 @@ namespace BoolderDataMigration.Core.Service
 
             return false;
         }
+
+        /// <summary>
+        /// This is a further helper method used to determine if a given coordinate (longitude, latitude) is contained within a polygon defined by a list of coordinates (longitude, latitude).
+        /// </summary>
+        /// <param name="longitude"></param>
+        /// <param name="latitude"></param>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
         public static bool PointInPolygon(double longitude, double latitude, List<(double Longitude, double Latitude)> polygon)
         {
             bool inside = false;
@@ -1033,6 +1123,16 @@ namespace BoolderDataMigration.Core.Service
             return inside;
         }
 
+        /// <summary>
+        /// This is a helper method used to save the southwest and northeast corner coordinates of a crag. It takes in the crag object and the unparsed string representations of the southwest and northeast latitude and longitude coordinates.
+        /// Used entirely by the more deprecated migration method, but still useful for reference.
+        /// </summary>
+        /// <param name="crag"></param>
+        /// <param name="unParsedSwLat"></param>
+        /// <param name="unParsedSwLon"></param>
+        /// <param name="unParsedNeLat"></param>
+        /// <param name="unParsedNeLon"></param>
+        /// <returns></returns>
         private async Task<bool> SaveCornerCoords(Crag crag, string unParsedSwLat, string unParsedSwLon, string unParsedNeLat, string unParsedNeLon)
         {
             Coordinates swCoordinates = new()
