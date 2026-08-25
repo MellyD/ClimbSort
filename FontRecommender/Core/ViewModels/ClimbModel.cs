@@ -1,8 +1,8 @@
-﻿using FontRecommender.Core.Models;
-using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.ViewModels.Generic;
+﻿using ClimbSort.Core.Models;
+using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.ViewModels.Generic;
 
-namespace FontRecommender.Core.ViewModels
+namespace ClimbSort.Core.ViewModels
 {
     /// <summary>
     /// View model for viewing Climb information. This version being the more detailed model.

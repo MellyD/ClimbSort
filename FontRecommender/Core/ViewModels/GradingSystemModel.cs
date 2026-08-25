@@ -1,4 +1,4 @@
-﻿namespace FontRecommender.Core.ViewModels
+﻿namespace ClimbSort.Core.ViewModels
 {
     /// <summary>
     /// View model of a Grading System, a system by which to categorise the difficulty of a Climb.

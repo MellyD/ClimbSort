@@ -1,12 +1,12 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using FontRecommender;
-using FontRecommender.Authentication;
-using FontRecommender.Automapper;
-using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.Services;
-using FontRecommender.Data;
-using FontRecommender.Data.Repository;
+using ClimbSort;
+using ClimbSort.Authentication;
+using ClimbSort.Automapper;
+using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.Services;
+using ClimbSort.Data;
+using ClimbSort.Data.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Identity.Client;
@@ -36,12 +36,12 @@ builder.Configuration.AddAzureAppConfiguration(options =>
                kv.SetCredential(credential);
            })
            .Select(KeyFilter.Any, LabelFilter.Null)
-           .Select(KeyFilter.Any, "FontRec");
+           .Select(KeyFilter.Any, "ClimbSort");
 });
 
 //Logging is then configured using Serilog.
 builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(builder.Configuration.GetSection("FontRec:Serilog")));
+    configuration.ReadFrom.Configuration(builder.Configuration.GetSection("ClimbSort:Serilog")));
 
 //Authentication is configured using Microsoft Identity Web, which allows the application to authenticate users using Azure Active Directory. The authentication settings are fetched from the Azure App Configuration.
 builder.Services.AddAuthorization(options =>
@@ -64,9 +64,9 @@ builder.Services.AddCors(options =>
 });
 
 //Database context is initialised using the db connection string, fetched from the Azure App Configuration. The connection string is stored in a Key Vault for extra security.
-builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
+builder.Services.AddDbContext<ClimbSortDBContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["ClimbSort:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif
@@ -76,10 +76,10 @@ builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddTransient(typeof(IFontService), typeof(FontService));
+builder.Services.AddTransient(typeof(IClimbSortService), typeof(ClimbSortService));
 builder.Services.AddTransient(typeof(IRepository<,>), typeof(Repository<,>));
 builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"],typeof(ConfigureAutomapper)); //License key is required for newer version of Automapper. It is fetched from the Azure App Configuration.
-builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec")); //The rest of the application configuration items are fetched and fill the config class (currently empty as no extra config items are yet required).
+builder.Services.Configure<ClimbSortConfig>(builder.Configuration.GetSection("ClimbSort")); //The rest of the application configuration items are fetched and fill the config class (currently empty as no extra config items are yet required).
 builder.Services.AddSwaggerGen(options =>
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";

@@ -1,6 +1,6 @@
-﻿using FontRecommender.Core.Models;
+﻿using ClimbSort.Core.Models;
 
-namespace FontRecommender.Core.ViewModels
+namespace ClimbSort.Core.ViewModels
 {
     /// <summary>
     /// View model of an individual Grade in a Grading System.

@@ -21,7 +21,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "FontRec": {
+    "ClimbSort": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

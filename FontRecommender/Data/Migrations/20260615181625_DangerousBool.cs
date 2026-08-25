@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace FontRecommender.Migrations
+namespace ClimbSort.Migrations
 {
     /// <inheritdoc />
     public partial class DangerousBool : Migration

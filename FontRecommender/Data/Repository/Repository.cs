@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using FontRecommender.Core.ViewModels.Generic;
+using ClimbSort.Core.ViewModels.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
-namespace FontRecommender.Data.Repository
+namespace ClimbSort.Data.Repository
 {
     public class Repository<C, TEntity> : IRepository<C, TEntity> where TEntity : class where C : DbContext
     {
@@ -19,7 +19,7 @@ namespace FontRecommender.Data.Repository
             _dbSet = context.Set<TEntity>();
             _mapper = mapper;
         }
-        public C FontRecommenderDBContext()
+        public C ClimbSortDBContext()
         {
             try
             {

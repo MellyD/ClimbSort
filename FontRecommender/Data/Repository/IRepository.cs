@@ -1,12 +1,12 @@
-﻿using FontRecommender.Core.ViewModels.Generic;
+﻿using ClimbSort.Core.ViewModels.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace FontRecommender.Data.Repository
+namespace ClimbSort.Data.Repository
 {
     public interface IRepository<C, TEntity> where TEntity : class where C : DbContext
     {
-        C FontRecommenderDBContext();
+        C ClimbSortDBContext();
         IQueryable<TEntity> GetAll();
         Task<TEntity> GetByIdAsync(Guid id);
         Task<TEntity> GetByIdAsync(int id);

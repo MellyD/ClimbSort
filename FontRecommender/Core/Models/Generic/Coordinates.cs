@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using static FontRecommender.Core.Enums;
+using static ClimbSort.Core.Enums;
 
-namespace FontRecommender.Core.Models.Generic
+namespace ClimbSort.Core.Models.Generic
 {
     public class Coordinates
     {

@@ -1,6 +1,6 @@
-﻿using static FontRecommender.Core.Enums;
+﻿using static ClimbSort.Core.Enums;
 
-namespace FontRecommender.Core.ViewModels.Generic
+namespace ClimbSort.Core.ViewModels.Generic
 {
     /// <summary>
     /// View model for an individual set of Coordinates.

@@ -1,10 +1,10 @@
-﻿using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Filters;
-using FontRecommender.Core.ViewModels.Generic;
+﻿using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Filters;
+using ClimbSort.Core.ViewModels.Generic;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FontRecommender.Controllers
+namespace ClimbSort.Controllers
 {
     /// <summary>
     /// This controller handles all Climb endpoints.
@@ -14,7 +14,7 @@ namespace FontRecommender.Controllers
     public class ClimbController: BaseController
     {
         //Class is kept simple, managing all logic in the service class.
-        private readonly IFontService _fontService;
+        private readonly IClimbSortService _climbSortService;
         private readonly ILogger _logger;
 
         /// <summary>
@@ -22,9 +22,9 @@ namespace FontRecommender.Controllers
         /// </summary>
         /// <param name="fontService"></param>
         /// <param name="logger"></param>
-        public ClimbController(IFontService fontService, ILogger logger)
+        public ClimbController(IClimbSortService fontService, ILogger logger)
         {
-            _fontService = fontService;
+            _climbSortService = fontService;
             _logger = logger;
         }
 
@@ -52,7 +52,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<ClimbSimpleModel> climbs = await _fontService.GetClimbs(filter);
+                IEnumerable<ClimbSimpleModel> climbs = await _climbSortService.GetClimbs(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -85,7 +85,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<ClimbSimpleModel> climbs = await _fontService.GetClimbs(filter);
+                IEnumerable<ClimbSimpleModel> climbs = await _climbSortService.GetClimbs(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -116,7 +116,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                OffsetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
+                OffsetPaginateView<ClimbSimpleModel> climbs = await _climbSortService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -147,7 +147,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                KeysetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
+                KeysetPaginateView<ClimbSimpleModel> climbs = await _climbSortService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -178,7 +178,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                OffsetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
+                OffsetPaginateView<ClimbSimpleModel> climbs = await _climbSortService.GetClimbsOffsetPaginated<ClimbSimpleModel>(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -209,7 +209,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                KeysetPaginateView<ClimbSimpleModel> climbs = await _fontService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
+                KeysetPaginateView<ClimbSimpleModel> climbs = await _climbSortService.GetAllClimbsKeysetPaginated<ClimbSimpleModel>(filter);
                 return Ok(climbs);
             }
             catch (KeyNotFoundException ex)
@@ -236,7 +236,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                ClimbModel climb = await _fontService.GetClimb(climbId);
+                ClimbModel climb = await _climbSortService.GetClimb(climbId);
                 return Ok(climb);
             }
             catch (KeyNotFoundException ex)
@@ -294,7 +294,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                Guid climbId = await _fontService.CreateClimb(climbModel);
+                Guid climbId = await _climbSortService.CreateClimb(climbModel);
                 return Ok(climbId);
             }
             catch (KeyNotFoundException ex)
@@ -356,7 +356,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                Guid climbId = await _fontService.UpdateClimb(climbModel);
+                Guid climbId = await _climbSortService.UpdateClimb(climbModel);
                 return Ok(climbId);
             }
             catch (KeyNotFoundException ex)
@@ -388,7 +388,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                await _fontService.DeleteClimb(climbId);
+                await _climbSortService.DeleteClimb(climbId);
                 return Ok();
             }
             catch (KeyNotFoundException ex)

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FontRecommender.Migrations
+namespace ClimbSort.Migrations
 {
     /// <inheritdoc />
     public partial class InitialBuild : Migration

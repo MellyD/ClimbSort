@@ -1,4 +1,4 @@
-﻿namespace FontRecommender.Core.ViewModels.Generic
+﻿namespace ClimbSort.Core.ViewModels.Generic
 {
     public class OffsetPaginateInsert
     {

@@ -3,11 +3,11 @@ using AutoMapper.Features;
 using BoolderDataMigration.Core.Interface;
 using BoolderDataMigration.Core.ViewModels;
 using BoolderDataMigration.Models;
-using FontRecommender.Core.Models;
-using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.Models.Static;
-using FontRecommender.Data;
-using FontRecommender.Data.Repository;
+using ClimbSort.Core.Models;
+using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.Models.Static;
+using ClimbSort.Data;
+using ClimbSort.Data.Repository;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -18,7 +18,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml;
 using static BoolderDataMigration.Enums;
-using static FontRecommender.Core.Enums;
+using static ClimbSort.Core.Enums;
 using static System.Net.WebRequestMethods;
 
 namespace BoolderDataMigration.Core.Service
@@ -30,15 +30,15 @@ namespace BoolderDataMigration.Core.Service
     public class MigrationService: IMigrationService
     {
         #region Setup
-        private readonly IRepository<FontRecommendationDBContext, Climb> _climbRepo;
-        private readonly IRepository<FontRecommendationDBContext, Crag> _cragRepo;
-        private readonly IRepository<FontRecommendationDBContext, Grade> _gradeRepo;
-        private readonly IRepository<FontRecommendationDBContext, Topography> _topographyRepo;
-        private readonly IRepository<FontRecommendationDBContext, WallType> _wallTypeRepo;
-        private readonly IRepository<FontRecommendationDBContext, Coordinates> _coordinatesRepo;
-        private readonly IRepository<FontRecommendationDBContext, Tag> _tagRepo;
-        private readonly IRepository<FontRecommendationDBContext, TagType> _tagTypeRepo;
-        private readonly IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> _circuitRepo;
+        private readonly IRepository<ClimbSortDBContext, Climb> _climbRepo;
+        private readonly IRepository<ClimbSortDBContext, Crag> _cragRepo;
+        private readonly IRepository<ClimbSortDBContext, Grade> _gradeRepo;
+        private readonly IRepository<ClimbSortDBContext, Topography> _topographyRepo;
+        private readonly IRepository<ClimbSortDBContext, WallType> _wallTypeRepo;
+        private readonly IRepository<ClimbSortDBContext, Coordinates> _coordinatesRepo;
+        private readonly IRepository<ClimbSortDBContext, Tag> _tagRepo;
+        private readonly IRepository<ClimbSortDBContext, TagType> _tagTypeRepo;
+        private readonly IRepository<ClimbSortDBContext, ClimbSort.Core.Models.Circuit> _circuitRepo;
         private readonly IRepository<BoolderContext, Area> _boolderAreaRepo;
         private readonly IRepository<BoolderContext, Problem> _boolderProblemRepo;
         private readonly IRepository<BoolderContext, Line> _boolderLineRepo;
@@ -47,15 +47,15 @@ namespace BoolderDataMigration.Core.Service
         private readonly IMapper _mapper;
 
         public MigrationService(
-            IRepository<FontRecommendationDBContext, Climb> climbRepo,
-            IRepository<FontRecommendationDBContext, Crag> cragRepo,
-            IRepository<FontRecommendationDBContext, Grade> gradeRepo,
-            IRepository<FontRecommendationDBContext, Topography> topographyRepo,
-            IRepository<FontRecommendationDBContext, WallType> wallTypeRepo,
-            IRepository<FontRecommendationDBContext, Coordinates> coordinatesRepo,
-            IRepository<FontRecommendationDBContext, Tag> tagRepo,
-            IRepository<FontRecommendationDBContext, TagType> tagTypeRepo,
-            IRepository<FontRecommendationDBContext, FontRecommender.Core.Models.Circuit> circuitRepo,
+            IRepository<ClimbSortDBContext, Climb> climbRepo,
+            IRepository<ClimbSortDBContext, Crag> cragRepo,
+            IRepository<ClimbSortDBContext, Grade> gradeRepo,
+            IRepository<ClimbSortDBContext, Topography> topographyRepo,
+            IRepository<ClimbSortDBContext, WallType> wallTypeRepo,
+            IRepository<ClimbSortDBContext, Coordinates> coordinatesRepo,
+            IRepository<ClimbSortDBContext, Tag> tagRepo,
+            IRepository<ClimbSortDBContext, TagType> tagTypeRepo,
+            IRepository<ClimbSortDBContext, ClimbSort.Core.Models.Circuit> circuitRepo,
             IRepository<BoolderContext, Area> boolderAreaRepo,
             IRepository<BoolderContext, Problem> boolderProblemRepo,
             IRepository<BoolderContext, Line> boolderLineRepo,
@@ -160,7 +160,7 @@ namespace BoolderDataMigration.Core.Service
         //        int passed = 0;
         //        int failed = 0;
 
-        //        var context = _climbRepo.FontRecommenderDBContext();
+        //        var context = _climbRepo.ClimbSortDBContext();
 
         //        var web = new HtmlWeb();
 
@@ -262,7 +262,7 @@ namespace BoolderDataMigration.Core.Service
 
                 //I've also decided to do database calls via the context, in order to reduce the number of calls to the repository and improve performance. This is a trade-off between performance and encapsulation, but in this case, I believe it's justified.
                 //It also allows me to make changes without saving to the database immediately, which is useful for batch processing.
-                var context = _climbRepo.FontRecommenderDBContext();
+                var context = _climbRepo.ClimbSortDBContext();
 
                 var web = new HtmlWeb();
 
@@ -491,7 +491,7 @@ namespace BoolderDataMigration.Core.Service
                 {
                     try
                     {
-                        FontRecommender.Core.Models.Circuit newCircuit = new()
+                        ClimbSort.Core.Models.Circuit newCircuit = new()
                         {
                             Colour = circuit.Color,
                             Beginner = circuit.BeginnerFriendly == 1,
@@ -685,7 +685,7 @@ namespace BoolderDataMigration.Core.Service
 
                 //We filter the links to only include those that have a href attribute, a non-empty inner text, and do not contain the string "toggle_favarea" in the href.
                 //We then group the links by their inner text and create a dictionary where the key is the inner text and the value is the href attribute value (with the leading '/' removed).
-                var dict = links.Where(a =>
+                var dict = links?.Where(a =>
                                 {
                                     var href = a.Attributes["href"]?.Value;
                                     var text = a.InnerText?.Trim();
@@ -699,7 +699,7 @@ namespace BoolderDataMigration.Core.Service
                                 .GroupBy(a => a.InnerText.Trim())
                                 .ToDictionary(
                                     g => g.Key,
-                                    g => g.First().Attributes["href"].Value.TrimStart('/'));
+                                    g => g.First()?.Attributes["href"]?.Value?.TrimStart('/'));
                 if (dict == null || !dict.Any())
                     throw new KeyNotFoundException("Failed to find crag extensions.");
 

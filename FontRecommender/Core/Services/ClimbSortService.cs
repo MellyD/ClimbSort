@@ -1,42 +1,42 @@
 ﻿using AutoMapper;
-using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.Models;
-using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.Models.Static;
-using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Filters;
-using FontRecommender.Core.ViewModels.Generic;
-using FontRecommender.Data;
-using FontRecommender.Data.Repository;
+using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.Models;
+using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.Models.Static;
+using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Filters;
+using ClimbSort.Core.ViewModels.Generic;
+using ClimbSort.Data;
+using ClimbSort.Data.Repository;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace FontRecommender.Core.Services
+namespace ClimbSort.Core.Services
 {
     /// <summary>
-    /// Service class that provides methods for managing climbs, crags, grades, grading systems, wall types, and coordinates in the FontRecommender application.
+    /// Service class that provides methods for managing climbs, crags, grades, grading systems, wall types, and coordinates in the ClimbSort application.
     /// </summary>
-    public class FontService : IFontService
+    public class ClimbSortService : IClimbSortService
     {
-        private readonly IRepository<FontRecommendationDBContext, Climb> _climbRepo;
-        private readonly IRepository<FontRecommendationDBContext, Crag> _cragRepo;
-        private readonly IRepository<FontRecommendationDBContext, Grade> _gradeRepo;
-        private readonly IRepository<FontRecommendationDBContext, GradingSystem> _gradingSystemRepo;
-        private readonly IRepository<FontRecommendationDBContext, WallType> _wallTypeRepo;
-        private readonly IRepository<FontRecommendationDBContext, Coordinates> _coordinatesRepo;
-        private readonly IRepository<FontRecommendationDBContext, Tag> _tagRepo;
+        private readonly IRepository<ClimbSortDBContext, Climb> _climbRepo;
+        private readonly IRepository<ClimbSortDBContext, Crag> _cragRepo;
+        private readonly IRepository<ClimbSortDBContext, Grade> _gradeRepo;
+        private readonly IRepository<ClimbSortDBContext, GradingSystem> _gradingSystemRepo;
+        private readonly IRepository<ClimbSortDBContext, WallType> _wallTypeRepo;
+        private readonly IRepository<ClimbSortDBContext, Coordinates> _coordinatesRepo;
+        private readonly IRepository<ClimbSortDBContext, Tag> _tagRepo;
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
-        public FontService(
-            IRepository<FontRecommendationDBContext, Climb> climbRepo,
-            IRepository<FontRecommendationDBContext, Crag> cragRepo,
-            IRepository<FontRecommendationDBContext, Grade> gradeRepo,
-            IRepository<FontRecommendationDBContext, GradingSystem> gradingSystemRepo,
-            IRepository<FontRecommendationDBContext, WallType> wallTypeRepo,
-            IRepository<FontRecommendationDBContext, Coordinates> coordinatesRepo,
-            IRepository<FontRecommendationDBContext, Tag> tagRepo,
+        public ClimbSortService(
+            IRepository<ClimbSortDBContext, Climb> climbRepo,
+            IRepository<ClimbSortDBContext, Crag> cragRepo,
+            IRepository<ClimbSortDBContext, Grade> gradeRepo,
+            IRepository<ClimbSortDBContext, GradingSystem> gradingSystemRepo,
+            IRepository<ClimbSortDBContext, WallType> wallTypeRepo,
+            IRepository<ClimbSortDBContext, Coordinates> coordinatesRepo,
+            IRepository<ClimbSortDBContext, Tag> tagRepo,
             IMapper mapper,
             ILogger logger)
         {

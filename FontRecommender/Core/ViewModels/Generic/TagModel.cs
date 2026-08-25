@@ -1,5 +1,5 @@
 ﻿
-namespace FontRecommender.Core.ViewModels.Generic
+namespace ClimbSort.Core.ViewModels.Generic
 {
     /// <summary>
     /// View model of a Tag, representing an attribute of a Climb or a Crag.

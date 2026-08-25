@@ -1,4 +1,4 @@
-﻿namespace FontRecommender.Core
+﻿namespace ClimbSort.Core
 {
     public class Enums
     {

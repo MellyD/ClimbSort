@@ -3,10 +3,10 @@ using BoolderDataMigration.AutoMapper;
 using BoolderDataMigration.Core.Interface;
 using BoolderDataMigration.Core.Service;
 using BoolderDataMigration.Models;
-using FontRecommender;
-using FontRecommender.Automapper;
-using FontRecommender.Data;
-using FontRecommender.Data.Repository;
+using ClimbSort;
+using ClimbSort.Automapper;
+using ClimbSort.Data;
+using ClimbSort.Data.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
@@ -41,13 +41,13 @@ builder.Configuration.AddAzureAppConfiguration(options =>
                kv.SetCredential(credential);
            })
            .Select(KeyFilter.Any, LabelFilter.Null)
-           .Select(KeyFilter.Any, "FontRec");
+           .Select(KeyFilter.Any, "ClimbSort");
 });
 
 //Database context is initialised using the db connection string, fetched from the Azure App Configuration. The connection string is stored in a Key Vault for extra security.
-builder.Services.AddDbContext<FontRecommendationDBContext>(options =>
+builder.Services.AddDbContext<ClimbSortDBContext>(options =>
 {
-    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["FontRec:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
+    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration["ClimbSort:SQLConnectionString"], opt => opt.EnableRetryOnFailure());
 #if DEBUG
     options.EnableSensitiveDataLogging();
 #endif
@@ -68,7 +68,7 @@ builder.Services.AddDbContext<BoolderContext>(options =>
 //Logging is then configured using Serilog.
 builder.Services.AddSerilog((context, configuration) =>
 {
-    var sectionName = builder.Configuration["FontRec:Serilog"];
+    var sectionName = builder.Configuration["ClimbSort:Serilog"];
     var readerOptions = new Serilog.Settings.Configuration.ConfigurationReaderOptions
     {
         SectionName = string.IsNullOrWhiteSpace(sectionName) ? "Serilog" : sectionName
@@ -79,7 +79,7 @@ builder.Services.AddSerilog((context, configuration) =>
 builder.Services.AddTransient(typeof(IRepository<,>), typeof(Repository<,>));
 builder.Services.AddTransient(typeof(IMigrationService), typeof(MigrationService));
 builder.Services.AddAutoMapper(cfg => cfg.LicenseKey = builder.Configuration["AutomapperLicenseKey"], typeof(MigrationAutomapper)); //License key is required for newer version of Automapper. It is fetched from the Azure App Configuration.
-builder.Services.Configure<FontConfig>(builder.Configuration.GetSection("FontRec"));
+builder.Services.Configure<ClimbSortConfig>(builder.Configuration.GetSection("ClimbSort"));
 
 using IHost host = builder.Build();
 

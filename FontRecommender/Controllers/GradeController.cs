@@ -1,8 +1,8 @@
-﻿using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.ViewModels;
+﻿using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FontRecommender.Controllers
+namespace ClimbSort.Controllers
 {
     /// <summary>
     /// This controller handles all Grade endpoints.
@@ -11,12 +11,12 @@ namespace FontRecommender.Controllers
     [Route("/api/[controller]")]
     public class GradeController: BaseController
     {
-        private readonly IFontService _fontService;
+        private readonly IClimbSortService _climbSortService;
         private readonly ILogger _logger;
-        public GradeController(IFontService fontService,
+        public GradeController(IClimbSortService fontService,
             ILogger logger) 
         {
-            _fontService = fontService;
+            _climbSortService = fontService;
             _logger = logger;
         }
 
@@ -31,7 +31,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<GradingSystemModel> models = _fontService.GetGradingSystems();
+                IEnumerable<GradingSystemModel> models = _climbSortService.GetGradingSystems();
 
                 return Ok(models);
             }
@@ -59,7 +59,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<GradeModel> models = await _fontService.GetGradesForSystem(gradingSystemId);
+                IEnumerable<GradeModel> models = await _climbSortService.GetGradesForSystem(gradingSystemId);
 
                 return Ok(models);
             }

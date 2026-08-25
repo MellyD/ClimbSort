@@ -1,6 +1,4 @@
-﻿using static FontRecommender.Core.Enums;
-
-namespace FontRecommender.Core.ViewModels.Filters
+﻿namespace ClimbSort.Core.ViewModels.Filters
 {
     /// <summary>
     /// Filter containing Crag attributes to filter on.

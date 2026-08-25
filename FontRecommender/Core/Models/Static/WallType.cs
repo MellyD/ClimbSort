@@ -1,6 +1,6 @@
-﻿using FontRecommender.Core.Models.Generic;
+﻿using ClimbSort.Core.Models.Generic;
 
-namespace FontRecommender.Core.Models.Static
+namespace ClimbSort.Core.Models.Static
 {
     public class WallType: BaseIdentity<int>
     {

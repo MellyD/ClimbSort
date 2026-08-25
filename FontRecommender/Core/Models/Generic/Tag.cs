@@ -1,7 +1,7 @@
-﻿using FontRecommender.Core.Models.Static;
+﻿using ClimbSort.Core.Models.Static;
 using System.ComponentModel.DataAnnotations;
 
-namespace FontRecommender.Core.Models.Generic
+namespace ClimbSort.Core.Models.Generic
 {
     public class Tag
     {

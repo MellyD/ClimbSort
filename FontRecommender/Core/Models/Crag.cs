@@ -1,6 +1,6 @@
-﻿using FontRecommender.Core.Models.Generic;
+﻿using ClimbSort.Core.Models.Generic;
 
-namespace FontRecommender.Core.Models
+namespace ClimbSort.Core.Models
 {
     public class Crag: BaseIdentity<Guid>
     {

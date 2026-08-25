@@ -1,10 +1,10 @@
-﻿using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Filters;
-using FontRecommender.Core.ViewModels.Generic;
+﻿using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Filters;
+using ClimbSort.Core.ViewModels.Generic;
 
-namespace FontRecommender.Core.Interfaces
+namespace ClimbSort.Core.Interfaces
 {
-    public interface IFontService
+    public interface IClimbSortService
     {
         Task<IEnumerable<ClimbSimpleModel>> GetClimbs(AdvancedClimbFilter filter);
         Task<IEnumerable<ClimbSimpleModel>> GetClimbs(ClimbFilter filter);

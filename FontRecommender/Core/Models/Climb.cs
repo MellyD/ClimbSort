@@ -1,7 +1,7 @@
-﻿using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.Models.Static;
+﻿using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.Models.Static;
 
-namespace FontRecommender.Core.Models
+namespace ClimbSort.Core.Models
 {
     public class Climb: BaseIdentity<Guid>
     {

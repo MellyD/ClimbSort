@@ -1,11 +1,11 @@
-using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Filters;
-using FontRecommender.Core.ViewModels.Generic;
+using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Filters;
+using ClimbSort.Core.ViewModels.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 
-namespace FontRecommender.Controllers
+namespace ClimbSort.Controllers
 {
     /// <summary>
     /// This controller handles all Crag endpoints.
@@ -14,11 +14,11 @@ namespace FontRecommender.Controllers
     [Route("/api/[controller]")]
     public class CragController : BaseController
     {
-        private readonly IFontService _fontService;
+        private readonly IClimbSortService _climbSortService;
         private readonly ILogger _logger;
-        public CragController(IFontService fontService, ILogger logger)
+        public CragController(IClimbSortService fontService, ILogger logger)
         {
-            _fontService = fontService;
+            _climbSortService = fontService;
             _logger = logger;
         }
 
@@ -38,7 +38,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<CragSimpleModel> crags = await _fontService.GetCrags(filter);
+                IEnumerable<CragSimpleModel> crags = await _climbSortService.GetCrags(filter);
                 return Ok(crags);
             }
             catch(KeyNotFoundException ex)
@@ -69,7 +69,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                KeysetPaginateView<CragSimpleModel> crags = await _fontService.GetCragsKeysetPaginated<CragSimpleModel>(filter);
+                KeysetPaginateView<CragSimpleModel> crags = await _climbSortService.GetCragsKeysetPaginated<CragSimpleModel>(filter);
                 return Ok(crags);
             }
             catch (KeyNotFoundException ex)
@@ -96,7 +96,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                CragModel crag = await _fontService.GetCrag(cragId);
+                CragModel crag = await _climbSortService.GetCrag(cragId);
                 return Ok(crag);
             }
             catch (KeyNotFoundException ex)
@@ -132,7 +132,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                Guid cragId = await _fontService.CreateCrag(cragModel);
+                Guid cragId = await _climbSortService.CreateCrag(cragModel);
                 return Ok(cragId);
             }
             catch (InvalidOperationException ex)
@@ -169,7 +169,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                Guid cragId = await _fontService.UpdateCrag(cragModel);
+                Guid cragId = await _climbSortService.UpdateCrag(cragModel);
                 return Ok(cragId);
             }
             catch (KeyNotFoundException ex)
@@ -196,7 +196,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                await _fontService.DeleteCrag(cragId);
+                await _climbSortService.DeleteCrag(cragId);
                 return Ok();
             }
             catch (Exception ex)

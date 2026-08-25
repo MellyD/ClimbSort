@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 
-namespace FontRecommender.Authentication
+namespace ClimbSort.Authentication
 {
     public class ScopesRequirement: AuthorizationHandler<ScopesRequirement>, IAuthorizationRequirement
     {

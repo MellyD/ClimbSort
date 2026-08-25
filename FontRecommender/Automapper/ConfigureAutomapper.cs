@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
-using FontRecommender.Core.Models;
-using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.Models.Static;
-using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Filters;
-using FontRecommender.Core.ViewModels.Generic;
-using static FontRecommender.Core.Enums;
+using ClimbSort.Core.Models;
+using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.Models.Static;
+using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Filters;
+using ClimbSort.Core.ViewModels.Generic;
+using static ClimbSort.Core.Enums;
 
-namespace FontRecommender.Automapper
+namespace ClimbSort.Automapper
 {
     public class ConfigureAutomapper: Profile
     {

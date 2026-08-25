@@ -1,7 +1,7 @@
-﻿using FontRecommender.Core.Models.Generic;
-using static FontRecommender.Core.Enums;
+﻿using ClimbSort.Core.Models.Generic;
+using static ClimbSort.Core.Enums;
 
-namespace FontRecommender.Core.Models
+namespace ClimbSort.Core.Models
 {
     public class Grade: BaseIdentity<int>
     {

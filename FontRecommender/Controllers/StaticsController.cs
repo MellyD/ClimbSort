@@ -1,22 +1,22 @@
-﻿using FontRecommender.Core.Interfaces;
-using FontRecommender.Core.ViewModels;
-using FontRecommender.Core.ViewModels.Generic;
+﻿using ClimbSort.Core.Interfaces;
+using ClimbSort.Core.ViewModels;
+using ClimbSort.Core.ViewModels.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using static FontRecommender.Core.Enums;
+using static ClimbSort.Core.Enums;
 
-namespace FontRecommender.Controllers
+namespace ClimbSort.Controllers
 {
     [ApiController]
     [Route("/api/[controller]")]
     public class StaticsController: BaseController
     {
-        private readonly IFontService _fontService;
+        private readonly IClimbSortService _climbSortService;
         private readonly ILogger _logger;
-        public StaticsController(IFontService fontService,
+        public StaticsController(IClimbSortService fontService,
             ILogger logger)
         {
-            _fontService = fontService;
+            _climbSortService = fontService;
             _logger = logger;
         }
 
@@ -31,7 +31,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<WallTypeModel> models = _fontService.GetWallTypes();
+                IEnumerable<WallTypeModel> models = _climbSortService.GetWallTypes();
 
                 return Ok(models);
             }
@@ -59,7 +59,7 @@ namespace FontRecommender.Controllers
         {
             try
             {
-                IEnumerable<TagModel> models = await _fontService.GetTags(forClimbs);
+                IEnumerable<TagModel> models = await _climbSortService.GetTags(forClimbs);
 
                 return Ok(models);
             }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace FontRecommender.Controllers
+namespace ClimbSort.Controllers
 {
     public class BaseController: ControllerBase
     {

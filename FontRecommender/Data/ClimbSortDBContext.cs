@@ -1,14 +1,14 @@
-﻿using FontRecommender.Core.Models;
-using FontRecommender.Core.Models.Generic;
-using FontRecommender.Core.Models.Static;
+﻿using ClimbSort.Core.Models;
+using ClimbSort.Core.Models.Generic;
+using ClimbSort.Core.Models.Static;
 using Microsoft.EntityFrameworkCore;
 using System.Net.NetworkInformation;
 
-namespace FontRecommender.Data
+namespace ClimbSort.Data
 {
-    public class FontRecommendationDBContext: DbContext
+    public class ClimbSortDBContext: DbContext
     {
-        public FontRecommendationDBContext(DbContextOptions<FontRecommendationDBContext> options) : base(options)
+        public ClimbSortDBContext(DbContextOptions<ClimbSortDBContext> options) : base(options)
         {
         }
 

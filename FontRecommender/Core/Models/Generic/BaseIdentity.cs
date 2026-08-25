@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FontRecommender.Core.Models.Generic
+namespace ClimbSort.Core.Models.Generic
 {
     public class BaseIdentity<T>
     {

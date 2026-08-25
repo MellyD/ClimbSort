@@ -1,4 +1,4 @@
-﻿namespace FontRecommender.Core.ViewModels
+﻿namespace ClimbSort.Core.ViewModels
 {
     /// <summary>
     /// View model of the Wall Type, the type of angle or shape of the rock face.

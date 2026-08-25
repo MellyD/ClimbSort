@@ -3,5 +3,5 @@
     <File Path=".editorconfig" />
   </Folder>
   <Project Path="BoolderDataMigration/BoolderDataMigration.csproj" Id="897e9646-59f8-423d-b351-f4d4fa8a9d01" />
-  <Project Path="FontRecommender/FontRecommender.csproj" />
+  <Project Path="FontRecommender/ClimbSort.csproj" />
 </Solution>
